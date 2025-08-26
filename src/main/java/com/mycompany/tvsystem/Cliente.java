@@ -12,6 +12,7 @@ public class Cliente {
     private String nombre;
     private String rut;
     private String domicilio;
+    private Suscripcion sub;
     
     public Cliente(){
         nombre = "";
