@@ -4,6 +4,11 @@
  */
 package com.mycompany.tvsystem;
 
+/**
+ *
+ * @author Maxi
+ */
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,5 +34,15 @@ public class SectorDeCobertura {
         this.nombre = nombre;
     }
     
+    public void setClientes(List<Cliente> clientes){
+        this.clientes = clientes;
+    }
     
+    public String getNombre(){
+        return nombre;
+    }
+    
+    public List<Cliente> getClientes(){
+        return clientes;
+    }
 }
