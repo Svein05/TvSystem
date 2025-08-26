@@ -42,7 +42,7 @@ public class PlanTelevision {
         this.precioMensual = precioMensual;
     }
 
-    public ArrayList getCanalesIncluidos() {
+    public List getCanalesIncluidos() {
         return canalesIncluidos;
     }
 
