@@ -4,9 +4,6 @@
  */
 package com.mycompany.tvsystem;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  *
  * @author elias
@@ -14,14 +11,12 @@ import java.util.List;
 public class PlanTelevision {
     private String nombrePlan;
     private long precioMensual;
-    private List<String> canalesIncluidos;
     private boolean ofertaActiva;
     private double descuento;
 
-    public PlanTelevision(String nombrePlan, long precioMensual, ArrayList canalesIncluidos, boolean ofertaActiva, double descuento) {
+    public PlanTelevision(String nombrePlan, long precioMensual, boolean ofertaActiva, double descuento) {
         this.nombrePlan = nombrePlan;
         this.precioMensual = precioMensual;
-        this.canalesIncluidos = canalesIncluidos;
         this.ofertaActiva = ofertaActiva;
         this.descuento = descuento;
     }
@@ -42,15 +37,7 @@ public class PlanTelevision {
         this.precioMensual = precioMensual;
     }
 
-    public List getCanalesIncluidos() {
-        return canalesIncluidos;
-    }
-
-    public void setCanalesIncluidos(ArrayList canalesIncluidos) {
-        this.canalesIncluidos = canalesIncluidos;
-    }
-
-    public boolean isOfertaActiva() {
+    public boolean getOfertaActiva() {
         return ofertaActiva;
     }
 
