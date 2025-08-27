@@ -12,18 +12,20 @@ public class Cliente {
     private String nombre;
     private String rut;
     private String domicilio;
-    private Suscripcion sub;
+    private Suscripcion suscripcion;
     
     public Cliente(){
-        nombre = "";
-        rut = "";
-        domicilio = "";
+        this.nombre = "";
+        this.rut = "";
+        this.domicilio = "";
+        this.suscripcion = null;
     }
     
     public Cliente(String nombre, String rut, String domicilio){
         this.nombre = nombre;
         this.rut = rut;
         this.domicilio = domicilio;
+        suscripcion = null;
     }
     
     public void setNombre(String nombre){
@@ -38,6 +40,10 @@ public class Cliente {
         this.domicilio = domicilio;
     }
     
+    public void setSuscripcion(Suscripcion suscripcion){
+        this.suscripcion = suscripcion;
+    }
+    
     public String getNombre(){
         return nombre;
     }
@@ -48,5 +54,28 @@ public class Cliente {
     
     public String getDomicilio(){
         return domicilio;
+    }
+    
+    public Suscripcion getSuscripcion(){
+        return suscripcion;
+    }
+    
+    public String mostrarInfo(){
+        return "Cliente: " + nombre + "\n" + "Rut: " + rut; 
+    }
+    
+    public String mostrarInfo(boolean incluirDomicilio){
+        if(incluirDomicilio){
+            return "Cliente: " + nombre + "\n" + "Rut: " + rut + "\n" + "Domicilio: " + domicilio;
+        }
+        return mostrarInfo();
+    }
+    
+    public String mostrarInfo(boolean incluirDomicilio, boolean incluirSuscripcion){
+        String info = mostrarInfo(incluirDomicilio);
+        if(incluirSuscripcion && suscripcion != null){
+            info += "\n" + "Suscripción: " + this.suscripcion.getEstado();
+        }
+        return info;
     }
 }
