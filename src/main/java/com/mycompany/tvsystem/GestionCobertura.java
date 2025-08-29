@@ -43,7 +43,9 @@ public class GestionCobertura {
         
         if (sector != null) {
             sector.addClient(cliente);
+            return true;
         }
+        return false;
     }
     
     public boolean agregarCliente(String nombreSector, String nombre, String rut, String domicilio, String codigoPlan) {

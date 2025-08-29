@@ -14,6 +14,7 @@ public class Suscripcion {
     private Date fechaInicio;
     private Date fechaTermino;
     private String estado;
+    private Cliente cliente;
     private PlanTelevision plan;
 
     public Suscripcion(Date fechaInicio, Date fechaTermino, String estado, Cliente cliente, PlanTelevision plan) {
