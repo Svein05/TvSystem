@@ -12,8 +12,8 @@ import java.util.ArrayList;
 
 /**
  *
- * @author Maxi
- * @author Elias
+ * @author Maximiliano Rodriguez
+ * @author Elias Manriquez
  */
 public class Main {
 

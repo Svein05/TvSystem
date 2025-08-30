@@ -6,7 +6,7 @@ package com.mycompany.tvsystem;
 
 /**
  *
- * @author elias
+ * @author Elias Manriquez
  */
 public class PlanTelevision {
     private String nombrePlan;

@@ -6,7 +6,7 @@ package com.mycompany.tvsystem;
 
 /**
  *
- * @author Maxi
+ * @author Maximiliano Rodriguez
  */
 
 import java.util.*;

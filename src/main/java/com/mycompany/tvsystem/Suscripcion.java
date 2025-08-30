@@ -8,7 +8,7 @@ import java.util.Date;
 
 /**
  *
- * @author elias
+ * @author Elias Manriquez
  */
 public class Suscripcion {
     private Date fechaInicio;

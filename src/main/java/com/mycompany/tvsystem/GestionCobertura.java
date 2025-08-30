@@ -8,7 +8,7 @@ import java.util.*;
 
 /**
  *
- * @author elias
+ * @author Elias Manriquez
  */
 public class GestionCobertura {
     private Map<String, SectorDeCobertura> sectoresCobertura;

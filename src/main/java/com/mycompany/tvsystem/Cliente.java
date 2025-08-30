@@ -6,7 +6,7 @@ package com.mycompany.tvsystem;
 
 /**
  *
- * @author Maxi
+ * @author Maximiliano Rodriguez
  */
 public class Cliente {
     private String nombre;
