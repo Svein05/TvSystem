@@ -26,47 +26,8 @@ public class Main {
     }
     
     private static void inicializarDatos() {
-        // Crear sectores con las 15 comunas más importantes de la Región de Valparaíso
-        SectorDeCobertura valparaiso = new SectorDeCobertura("VALPARAISO");
-        SectorDeCobertura vinaDelMar = new SectorDeCobertura("VINA_DEL_MAR");
-        SectorDeCobertura quilpue = new SectorDeCobertura("QUILPUE");
-        SectorDeCobertura villaAlemana = new SectorDeCobertura("VILLA_ALEMANA");
-        SectorDeCobertura limache = new SectorDeCobertura("LIMACHE");
-        SectorDeCobertura olmue = new SectorDeCobertura("OLMUE");
-        SectorDeCobertura sanAntonio = new SectorDeCobertura("SAN_ANTONIO");
-        SectorDeCobertura cartagena = new SectorDeCobertura("CARTAGENA");
-        SectorDeCobertura elQuisco = new SectorDeCobertura("EL_QUISCO");
-        SectorDeCobertura algarrobo = new SectorDeCobertura("ALGARROBO");
-        SectorDeCobertura sanFelipe = new SectorDeCobertura("SAN_FELIPE");
-        SectorDeCobertura losAndes = new SectorDeCobertura("LOS_ANDES");
-        SectorDeCobertura llay = new SectorDeCobertura("LLAY_LLAY");
-        SectorDeCobertura quintero = new SectorDeCobertura("QUINTERO");
-        SectorDeCobertura concon = new SectorDeCobertura("CONCON");
-        
-        gestionCobertura.getSectoresCobertura().put("VALPARAISO", valparaiso);
-        gestionCobertura.getSectoresCobertura().put("VINA_DEL_MAR", vinaDelMar);
-        gestionCobertura.getSectoresCobertura().put("QUILPUE", quilpue);
-        gestionCobertura.getSectoresCobertura().put("VILLA_ALEMANA", villaAlemana);
-        gestionCobertura.getSectoresCobertura().put("LIMACHE", limache);
-        gestionCobertura.getSectoresCobertura().put("OLMUE", olmue);
-        gestionCobertura.getSectoresCobertura().put("SAN_ANTONIO", sanAntonio);
-        gestionCobertura.getSectoresCobertura().put("CARTAGENA", cartagena);
-        gestionCobertura.getSectoresCobertura().put("EL_QUISCO", elQuisco);
-        gestionCobertura.getSectoresCobertura().put("ALGARROBO", algarrobo);
-        gestionCobertura.getSectoresCobertura().put("SAN_FELIPE", sanFelipe);
-        gestionCobertura.getSectoresCobertura().put("LOS_ANDES", losAndes);
-        gestionCobertura.getSectoresCobertura().put("LLAY_LLAY", llay);
-        gestionCobertura.getSectoresCobertura().put("QUINTERO", quintero);
-        gestionCobertura.getSectoresCobertura().put("CONCON", concon);
-        
-        // Crear algunos planes de ejemplo
-        PlanTelevision planBasico = new PlanTelevision("Plan Básico", 15000, false, 0.0);
-        PlanTelevision planPremium = new PlanTelevision("Plan Premium", 25000, true, 0.1);
-        PlanTelevision planFamiliar = new PlanTelevision("Plan Familiar", 35000, false, 0.0);
-        
-        gestionCobertura.getPlanesDisponibles().put("BASICO", planBasico);
-        gestionCobertura.getPlanesDisponibles().put("PREMIUM", planPremium);
-        gestionCobertura.getPlanesDisponibles().put("FAMILIAR", planFamiliar);
+        inicializarSectores();
+        inicializarPlanes();
     }
     
     private static void mostrarMenu() {
@@ -293,6 +254,40 @@ public class Main {
             }
         } catch (IOException e) {
             System.out.println("Error al leer entrada: " + e.getMessage());
+        }
+    }
+    
+    private static void inicializarSectores() {
+        String[] nombresSectores = {
+            "VALPARAISO", "VINA_DEL_MAR", "QUILPUE", "VILLA_ALEMANA", 
+            "LIMACHE", "OLMUE", "SAN_ANTONIO", "CARTAGENA", "EL_QUISCO", 
+            "ALGARROBO", "SAN_FELIPE", "LOS_ANDES", "LLAY_LLAY", 
+            "QUINTERO", "CONCON"
+        };
+        
+        for (String nombreSector : nombresSectores) {
+            SectorDeCobertura sector = new SectorDeCobertura(nombreSector);
+            gestionCobertura.getSectoresCobertura().put(nombreSector, sector);
+        }
+    }
+    
+    private static void inicializarPlanes() {
+        // Datos de los planes: {codigo, nombre, precio, incluye premium, descuento}
+        Object[][] datosPlanes = {
+            {"BASICO", "Plan Básico", 15000, false, 0.0},
+            {"PREMIUM", "Plan Premium", 25000, true, 0.1},
+            {"FAMILIAR", "Plan Familiar", 35000, false, 0.0}
+        };
+        
+        for (Object[] datos : datosPlanes) {
+            String codigo = (String) datos[0];
+            String nombre = (String) datos[1];
+            int precio = (Integer) datos[2];
+            boolean incluyePremium = (Boolean) datos[3];
+            double descuento = (Double) datos[4];
+            
+            PlanTelevision plan = new PlanTelevision(nombre, precio, incluyePremium, descuento);
+            gestionCobertura.getPlanesDisponibles().put(codigo, plan);
         }
     }
 }
