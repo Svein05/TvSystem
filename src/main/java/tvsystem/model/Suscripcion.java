@@ -1,13 +1,9 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-package com.mycompany.tvsystem;
+package tvsystem.model;
 
 import java.util.Date;
 
 /**
- *
+ * @author Maximiliano Rodriguez
  * @author Elias Manriquez
  */
 public class Suscripcion {
@@ -15,15 +11,17 @@ public class Suscripcion {
     private Date fechaTermino;
     private String estado;
     private Cliente cliente;
-    private PlanTelevision plan;
+    private PlanSector plan;
 
-    public Suscripcion(Date fechaInicio, Date fechaTermino, String estado, Cliente cliente, PlanTelevision plan) {
+    public Suscripcion(Date fechaInicio, Date fechaTermino, String estado, Cliente cliente, PlanSector plan) {
         this.fechaInicio = fechaInicio;
         this.fechaTermino = fechaTermino;
         this.estado = estado;
         this.cliente = cliente;
         this.plan = plan;
     }
+
+    // -- SETTERS Y GETTERS --
 
     public Date getFechaInicio() {
         return fechaInicio;
@@ -57,12 +55,11 @@ public class Suscripcion {
         this.cliente = cliente;
     }
 
-    public PlanTelevision getPlan() {
+    public PlanSector getPlan() {
         return plan;
     }
 
-    public void setPlan(PlanTelevision plan) {
+    public void setPlan(PlanSector plan) {
         this.plan = plan;
     }
-    
 }

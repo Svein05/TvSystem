@@ -1,11 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-package com.mycompany.tvsystem;
+package tvsystem.model;
 
 /**
- *
+ * @author Elias Manriquez
  * @author Maximiliano Rodriguez
  */
 public class Cliente {
@@ -28,6 +24,8 @@ public class Cliente {
         suscripcion = null;
     }
     
+    // -- SETTERS --
+
     public void setNombre(String nombre){
         this.nombre = nombre;
     }
@@ -43,6 +41,8 @@ public class Cliente {
     public void setSuscripcion(Suscripcion suscripcion){
         this.suscripcion = suscripcion;
     }
+
+    // -- GETTERS --
     
     public String getNombre(){
         return nombre;
@@ -59,6 +59,8 @@ public class Cliente {
     public Suscripcion getSuscripcion(){
         return suscripcion;
     }
+
+    // -- METODOS --
     
     public String mostrarInfo(){
         return "Cliente: " + nombre + "\n" + "Rut: " + rut; 
