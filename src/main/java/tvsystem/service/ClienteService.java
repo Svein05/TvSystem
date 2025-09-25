@@ -3,6 +3,7 @@ package tvsystem.service;
 import tvsystem.model.*;
 import tvsystem.repository.*;
 import tvsystem.util.RutValidator;
+import tvsystem.util.CsvManager;
 import java.util.*;
 
 /**
@@ -49,10 +50,10 @@ public class ClienteService {
         // Crear cliente
         Cliente nuevoCliente = new Cliente(nombre, RutValidator.formatearRut(rut), domicilio);
         
-        // Crear suscripción
+        // Crear suscripción con duración de 1 mes
         Date fechaInicio = new Date();
         Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.MONTH, 12);
+        cal.add(Calendar.MONTH, 1); // Cambio: 1 mes en lugar de 12
         Date fechaTermino = cal.getTime();
         
         Suscripcion nuevaSuscripcion = new Suscripcion(fechaInicio, fechaTermino, "ACTIVA", nuevoCliente, plan);
@@ -111,7 +112,18 @@ public class ClienteService {
         Cliente cliente = clienteRepository.findByRut(rut);
         if (cliente != null && cliente.getSuscripcion() != null) {
             cliente.getSuscripcion().setEstado(nuevoEstado);
-            return true;
+            
+            // IMPORTANTE: Guardar los cambios en el CSV
+            SectorService sectorService = new SectorService(sectorRepository);
+            PlanService planService = new PlanService(planRepository);
+            boolean guardado = CsvManager.guardarDatos(sectorService, this, planService);
+            
+            if (guardado) {
+                System.out.println("✅ Estado de suscripción actualizado y guardado para: " + cliente.getNombre());
+            } else {
+                System.out.println("❌ Error al guardar cambios de estado para: " + cliente.getNombre());
+            }
+            return guardado;
         }
         return false;
     }

@@ -6,8 +6,7 @@ import tvsystem.util.CsvManager;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.util.List;
 import java.util.Map;
 
@@ -28,10 +27,28 @@ public class MainWindow extends JFrame {
     private JPanel chartPanel;
     private JPanel sectoresGridPanel;
     
-    // Array de colores para los gráficos
+    // Array de colores para los gráficos - Ampliado para evitar repeticiones
     private final Color[] coloresGraficos = {
-        new Color(33, 150, 243), new Color(76, 175, 80), new Color(255, 152, 0),
-        new Color(156, 39, 176), new Color(244, 67, 54), new Color(0, 150, 136)
+        new Color(33, 150, 243),   // Azul
+        new Color(76, 175, 80),    // Verde
+        new Color(255, 152, 0),    // Naranja
+        new Color(156, 39, 176),   // Púrpura
+        new Color(244, 67, 54),    // Rojo
+        new Color(0, 150, 136),    // Verde azulado
+        new Color(255, 193, 7),    // Amarillo
+        new Color(96, 125, 139),   // Azul gris
+        new Color(205, 220, 57),   // Lima
+        new Color(255, 87, 34),    // Naranja profundo
+        new Color(121, 85, 72),    // Marrón
+        new Color(63, 81, 181),    // Índigo
+        new Color(233, 30, 99),    // Rosa
+        new Color(0, 188, 212),    // Cian
+        new Color(139, 195, 74),   // Verde claro
+        new Color(255, 111, 97),   // Coral
+        new Color(126, 87, 194),   // Violeta
+        new Color(92, 107, 192),   // Azul lavanda
+        new Color(38, 166, 154),   // Turquesa
+        new Color(102, 187, 106)   // Verde menta
     };
     
     public MainWindow(SectorService sectorService, 
@@ -412,7 +429,6 @@ public class MainWindow extends JFrame {
         sectoresGridPanel.removeAll();
         
         List<Sector> sectores = sectorService.obtenerTodosLosSectores();
-        int colorIndex = 0;
         
         for (Sector sector : sectores) {
             // Agregar información del sector
@@ -422,7 +438,7 @@ public class MainWindow extends JFrame {
             // Crear botón personalizado con bolita si tiene ingresos
             JButton btnSector;
             if (ingresos > 0) {
-                final int currentColorIndex = colorIndex;
+                final Color colorSector = obtenerColorSector(sector.getNombre());
                 btnSector = new JButton() {
                     @Override
                     protected void paintComponent(Graphics g) {
@@ -437,7 +453,7 @@ public class MainWindow extends JFrame {
                         int x = getWidth() - bolitaSize - margen;
                         int y = margen;
                         
-                        g2d.setColor(coloresGraficos[currentColorIndex % coloresGraficos.length]);
+                        g2d.setColor(colorSector);
                         g2d.fillOval(x, y, bolitaSize, bolitaSize);
                         g2d.setColor(Color.BLACK);
                         g2d.drawOval(x, y, bolitaSize, bolitaSize);
@@ -445,7 +461,6 @@ public class MainWindow extends JFrame {
                         g2d.dispose();
                     }
                 };
-                colorIndex++;
             } else {
                 btnSector = new JButton();
             }
@@ -494,11 +509,11 @@ public class MainWindow extends JFrame {
         JPanel panel = new JPanel(new BorderLayout());
         
         // Crear modelo de tabla
-        String[] columnas = {"Nombre", "RUT", "Sector", "Plan", "Domicilio", "Estado"};
+        String[] columnas = {"Nombre", "RUT", "Sector", "Plan", "Domicilio", "Estado", "Acciones"};
         javax.swing.table.DefaultTableModel tableModel = new javax.swing.table.DefaultTableModel(columnas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Solo lectura
+                return column == 6; // Solo la columna de acciones es editable
             }
         };
         
@@ -514,6 +529,26 @@ public class MainWindow extends JFrame {
         clientesTable.getColumnModel().getColumn(3).setPreferredWidth(120); // Plan
         clientesTable.getColumnModel().getColumn(4).setPreferredWidth(150); // Domicilio
         clientesTable.getColumnModel().getColumn(5).setPreferredWidth(80);  // Estado
+        clientesTable.getColumnModel().getColumn(6).setPreferredWidth(120); // Acciones
+        
+        // Agregar listener para clicks en la tabla (acciones)
+        clientesTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int row = clientesTable.rowAtPoint(e.getPoint());
+                int col = clientesTable.columnAtPoint(e.getPoint());
+                
+                if (row >= 0 && col == 6) { // Columna de acciones
+                    String accion = (String) tableModel.getValueAt(row, 6);
+                    if ("Registrar Pago".equals(accion)) {
+                        String rutCliente = (String) tableModel.getValueAt(row, 1);
+                        registrarPagoCliente(rutCliente);
+                        // Actualizar tabla después del pago
+                        actualizarTablaClientes(tableModel);
+                    }
+                }
+            }
+        });
         
         // Panel superior con controles - pasar referencias de tabla y modelo
         JPanel topPanel = createClientesTopPanel(tableModel, clientesTable);
@@ -635,7 +670,7 @@ public class MainWindow extends JFrame {
                     ClienteDetailDialog dialog = new ClienteDetailDialog(
                         this, cliente, clienteService, planService);
                     dialog.setVisible(true);
-                    actualizarTodasLasVistas();
+                    // actualizarTodasLasVistas(); // Se actualizará desde el diálogo
                 }
             }
         });
@@ -700,6 +735,14 @@ public class MainWindow extends JFrame {
         for (Sector sector : sectores) {
             List<Cliente> clientes = sector.getClientes();
             for (Cliente cliente : clientes) {
+                String estado = obtenerEstadoCliente(cliente);
+                String accion = "";
+                
+                // Mostrar botón "Registrar Pago" si está próxima a vencer
+                if ("Próxima a Vencer".equals(estado)) {
+                    accion = "Registrar Pago";
+                }
+                
                 Object[] fila = {
                     cliente.getNombre(),
                     cliente.getRut(),
@@ -707,7 +750,8 @@ public class MainWindow extends JFrame {
                     cliente.getSuscripcion() != null && cliente.getSuscripcion().getPlan() != null ? 
                         cliente.getSuscripcion().getPlan().getNombrePlan() : "Sin plan",
                     cliente.getDomicilio(),
-                    cliente.getSuscripcion() != null ? "Activo" : "Inactivo"
+                    estado,
+                    accion
                 };
                 tableModel.addRow(fila);
             }
@@ -769,7 +813,9 @@ public class MainWindow extends JFrame {
                 break;
             case "Estado":
                 valoresUnicos.add("Activo");
-                valoresUnicos.add("Inactivo");
+                valoresUnicos.add("Próxima a Vencer");
+                valoresUnicos.add("Suspendido");
+                valoresUnicos.add("Cancelado");
                 break;
         }
         
@@ -806,7 +852,7 @@ public class MainWindow extends JFrame {
                 String nombrePlan = cliente.getSuscripcion() != null && cliente.getSuscripcion().getPlan() != null ? 
                     cliente.getSuscripcion().getPlan().getNombrePlan() : "Sin plan";
                 String domicilio = cliente.getDomicilio();
-                String estado = cliente.getSuscripcion() != null ? "Activo" : "Inactivo";
+                String estado = obtenerEstadoCliente(cliente);
                 
                 // Determinar el tipo de plan para filtrado
                 String tipoPlan = "Sin plan";
@@ -1076,7 +1122,7 @@ public class MainWindow extends JFrame {
     /**
      * MÉTODO PRINCIPAL: Actualiza todas las vistas después de cambios importantes
      */
-    private void actualizarTodasLasVistas() {
+    public void actualizarTodasLasVistas() {
         SwingUtilities.invokeLater(() -> {
             // 1. Actualizar árbol de clientes
             crearArbolClientes();
@@ -1101,9 +1147,19 @@ public class MainWindow extends JFrame {
     }
     
     /**
+     * Muestra el diálogo de detalles para un cliente específico
+     */
+    public void mostrarDetallesCliente(Cliente cliente) {
+        ClienteDetailDialog dialog = new ClienteDetailDialog(
+            this, cliente, clienteService, planService);
+        dialog.setVisible(true);
+        // actualizarTodasLasVistas(); // Se actualizará desde el diálogo
+    }
+    
+    /**
      * Muestra el diálogo para editar un cliente existente
      */
-    private void mostrarDialogoEditarCliente(Cliente cliente) {
+    public void mostrarDialogoEditarCliente(Cliente cliente) {
         JDialog dialog = new JDialog(this, "Editar Cliente", true);
         dialog.setSize(400, 300);
         dialog.setLocationRelativeTo(this);
@@ -1200,14 +1256,11 @@ public class MainWindow extends JFrame {
                     return;
                 }
                 
-                Color[] colores = coloresGraficos;
-                
                 int diameter = Math.min(getWidth() - 60, getHeight() - 60);
                 int x = (getWidth() - diameter) / 2;
                 int y = 30;
                 
                 int startAngle = 0;
-                int colorIndex = 0;
                 
                 for (Sector sector : sectores) {
                     int clientesSector = sector.contarClientes();
@@ -1215,7 +1268,9 @@ public class MainWindow extends JFrame {
                         double porcentaje = (clientesSector * 1.0) / totalClientes;
                         int angle = (int) (porcentaje * 360);
                         
-                        g2d.setColor(colores[colorIndex % colores.length]);
+                        // Usar color consistente para este sector
+                        Color colorSector = obtenerColorSector(sector.getNombre());
+                        g2d.setColor(colorSector);
                         g2d.fillArc(x, y, diameter, diameter, startAngle, angle);
                         
                         g2d.setColor(Color.WHITE);
@@ -1223,7 +1278,6 @@ public class MainWindow extends JFrame {
                         g2d.drawArc(x, y, diameter, diameter, startAngle, angle);
                         
                         startAngle += angle;
-                        colorIndex++;
                     }
                 }
                 
@@ -1265,8 +1319,6 @@ public class MainWindow extends JFrame {
                     return;
                 }
                 
-                Color[] colores = coloresGraficos;
-                
                 int barWidth = Math.max(25, (getWidth() - 60) / Math.max(sectores.size(), 1));
                 int maxBarHeight = getHeight() - 80;
                 int startX = 30;
@@ -1274,19 +1326,18 @@ public class MainWindow extends JFrame {
                 
                 g2d.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 9));
                 
-                int colorIndex = 0;
                 for (Sector sector : sectores) {
                     double ingresos = calcularIngresosSector(sector);
                     if (ingresos > 0) {
                         int barHeight = (int) ((ingresos / maxIngresos) * maxBarHeight);
                         
-                        g2d.setColor(colores[colorIndex % colores.length]);
+                        // Usar color consistente para este sector
+                        Color colorSector = obtenerColorSector(sector.getNombre());
+                        g2d.setColor(colorSector);
                         g2d.fillRect(startX, baseY - barHeight, barWidth - 5, barHeight);
                         
                         g2d.setColor(Color.BLACK);
                         g2d.drawRect(startX, baseY - barHeight, barWidth - 5, barHeight);
-                        
-                        colorIndex++;
                     }
                     startX += barWidth;
                 }
@@ -1301,5 +1352,124 @@ public class MainWindow extends JFrame {
         mainPanel.add(barrasPanel);
         
         return mainPanel;
+    }
+    
+    /**
+     * Obtiene un color único y consistente para un sector específico
+     * basado en el hash de su nombre para evitar repeticiones
+     */
+    private Color obtenerColorSector(String nombreSector) {
+        // Usar el hash del nombre para asegurar consistencia
+        int hash = Math.abs(nombreSector.hashCode());
+        int indiceColor = hash % coloresGraficos.length;
+        return coloresGraficos[indiceColor];
+    }
+    
+    /**
+     * Determina el estado correcto de un cliente basado en su suscripción
+     */
+    private String obtenerEstadoCliente(Cliente cliente) {
+        if (cliente.getSuscripcion() == null) {
+            return "Cancelado"; // Sin suscripción = Cancelado
+        }
+        
+        // Usar la nueva lógica de estado basada en fechas y pagos
+        String estadoActual = cliente.getSuscripcion().obtenerEstadoActual();
+        
+        switch (estadoActual) {
+            case "ACTIVA":
+                return "Activo";
+            case "SUSPENDIDA":
+                return "Suspendido";
+            case "CANCELADA":
+                return "Cancelado";
+            case "PROXIMA_A_VENCER":
+                return "Próxima a Vencer";
+            default:
+                return "Cancelado"; // Por defecto cancelado, no inactivo
+        }
+    }
+    
+    /**
+     * Registra el pago para un cliente específico
+     */
+    private void registrarPagoCliente(String rutCliente) {
+        Cliente cliente = buscarClientePorRut(rutCliente);
+        if (cliente != null && cliente.getSuscripcion() != null) {
+            cliente.getSuscripcion().registrarPago();
+            
+            JOptionPane.showMessageDialog(this,
+                "💳 Pago registrado exitosamente para " + cliente.getNombre() + "\n" +
+                "🗓️ Nueva fecha de vencimiento: " + cliente.getSuscripcion().getProximoVencimiento(),
+                "Pago Registrado",
+                JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this,
+                "❌ No se pudo encontrar el cliente o su suscripción",
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    /**
+     * Actualiza la interfaz (usado por diálogos para refrescar datos)
+     */
+    public void actualizarInterfaz() {
+        // Actualizar específicamente la tabla de clientes activa
+        actualizarTablaClientesActiva();
+        
+        // También actualizar árbol y sectores
+        SwingUtilities.invokeLater(() -> {
+            crearArbolClientes();
+            actualizarSectoresGrid();
+            
+            // Revalidar solo lo necesario
+            if (tabbedPane.getSelectedIndex() == 1) { // Si está en la pestaña de clientes
+                tabbedPane.getSelectedComponent().revalidate();
+                tabbedPane.getSelectedComponent().repaint();
+            }
+        });
+        
+        System.out.println("🔄 Interfaz actualizada desde diálogo");
+    }
+    
+    /**
+     * Actualiza la tabla de clientes que está actualmente visible
+     */
+    private void actualizarTablaClientesActiva() {
+        // Buscar la tabla activa en el panel de clientes
+        Component panelClientes = tabbedPane.getComponentAt(1);
+        javax.swing.table.DefaultTableModel tableModel = encontrarTableModelEnPanel(panelClientes);
+        
+        if (tableModel != null) {
+            actualizarTablaClientes(tableModel);
+            System.out.println("📊 Tabla de clientes actualizada directamente");
+        } else {
+            System.out.println("⚠️ No se encontró la tabla de clientes para actualizar");
+        }
+    }
+    
+    /**
+     * Busca recursivamente el DefaultTableModel en un panel
+     */
+    private javax.swing.table.DefaultTableModel encontrarTableModelEnPanel(Component component) {
+        if (component instanceof JTable) {
+            JTable table = (JTable) component;
+            if (table.getModel() instanceof javax.swing.table.DefaultTableModel) {
+                return (javax.swing.table.DefaultTableModel) table.getModel();
+            }
+        }
+        
+        if (component instanceof Container) {
+            Container container = (Container) component;
+            for (Component child : container.getComponents()) {
+                javax.swing.table.DefaultTableModel result = encontrarTableModelEnPanel(child);
+                if (result != null) {
+                    return result;
+                }
+            }
+        }
+        
+        return null;
     }
 }

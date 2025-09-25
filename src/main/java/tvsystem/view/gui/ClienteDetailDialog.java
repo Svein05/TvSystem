@@ -15,14 +15,16 @@ public class ClienteDetailDialog extends JDialog {
     private final Cliente cliente;
     private final ClienteService clienteService;
     private final PlanService planService;
+    private final MainWindow parentWindow;
     
-    public ClienteDetailDialog(JFrame parent, Cliente cliente, 
+    public ClienteDetailDialog(MainWindow parent, Cliente cliente, 
                               ClienteService clienteService, 
                               PlanService planService) {
         super(parent, "Detalles del Cliente: " + cliente.getNombre(), true);
         this.cliente = cliente;
         this.clienteService = clienteService;
         this.planService = planService;
+        this.parentWindow = parent;
         
         initComponents();
         setLocationRelativeTo(parent);
@@ -242,14 +244,27 @@ public class ClienteDetailDialog extends JDialog {
             if (actualizado) {
                 JOptionPane.showMessageDialog(this, 
                     "Estado actualizado correctamente a: " + nuevoEstado);
-                // Recargar el diálogo
+                
+                // Notificar al MainWindow para actualizar la tabla
+                if (parentWindow != null) {
+                    parentWindow.actualizarInterfaz();
+                }
+                
+                // Cerrar el diálogo actual y reabrir con datos frescos
                 dispose();
-                ClienteDetailDialog nuevoDialog = new ClienteDetailDialog(
-                    (JFrame) getOwner(), 
-                    clienteService.obtenerClientePorRut(cliente.getRut()), 
-                    clienteService, 
-                    planService);
-                nuevoDialog.setVisible(true);
+                
+                // Obtener cliente actualizado
+                Cliente clienteActualizado = clienteService.obtenerClientePorRut(cliente.getRut());
+                if (clienteActualizado != null) {
+                    ClienteDetailDialog nuevoDialog = new ClienteDetailDialog(
+                        parentWindow, 
+                        clienteActualizado, 
+                        clienteService, 
+                        planService);
+                    nuevoDialog.setVisible(true);
+                } else {
+                    System.out.println("⚠️ No se pudo recargar el cliente actualizado");
+                }
             } else {
                 JOptionPane.showMessageDialog(this, 
                     "Error al actualizar el estado", 

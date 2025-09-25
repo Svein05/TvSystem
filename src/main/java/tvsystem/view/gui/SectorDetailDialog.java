@@ -5,8 +5,6 @@ import tvsystem.service.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
 /**
@@ -17,15 +15,15 @@ import java.util.List;
 public class SectorDetailDialog extends JDialog {
     private final Sector sector;
     private final ClienteService clienteService;
-    private final PlanService planService;
+    private final MainWindow mainWindow; // Referencia al MainWindow
     
-    public SectorDetailDialog(JFrame parent, Sector sector, 
+    public SectorDetailDialog(MainWindow parent, Sector sector, 
                              ClienteService clienteService, 
                              PlanService planService) {
         super(parent, "Detalles del Sector: " + sector.getNombre(), true);
         this.sector = sector;
         this.clienteService = clienteService;
-        this.planService = planService;
+        this.mainWindow = parent;
         
         initComponents();
         setLocationRelativeTo(parent);
@@ -140,10 +138,10 @@ public class SectorDetailDialog extends JDialog {
                 String rut = (String) model.getValueAt(selectedRow, 0);
                 Cliente cliente = clienteService.obtenerClientePorRut(rut);
                 if (cliente != null) {
-                    JOptionPane.showMessageDialog(this, 
-                        cliente.mostrarInfo(true, true), 
-                        "Detalles del Cliente", 
-                        JOptionPane.INFORMATION_MESSAGE);
+                    // Usar la misma función que en gestión de clientes
+                    mainWindow.mostrarDetallesCliente(cliente);
+                    // Actualizar tabla después de posibles cambios
+                    actualizarTablaClientes(model);
                 }
             }
         });
@@ -151,10 +149,16 @@ public class SectorDetailDialog extends JDialog {
         btnEditarCliente.addActionListener(e -> {
             int selectedRow = table.getSelectedRow();
             if (selectedRow != -1) {
-                JOptionPane.showMessageDialog(this, 
-                    "Función de edición en desarrollo", 
-                    "Próximamente", 
-                    JOptionPane.INFORMATION_MESSAGE);
+                String rut = (String) model.getValueAt(selectedRow, 0);
+                Cliente cliente = clienteService.obtenerClientePorRut(rut);
+                if (cliente != null) {
+                    // Usar la misma función que en gestión de clientes
+                    mainWindow.mostrarDialogoEditarCliente(cliente);
+                    // Actualizar tabla después de la edición
+                    actualizarTablaClientes(model);
+                    // También actualizar vistas principales
+                    mainWindow.actualizarTodasLasVistas();
+                }
             }
         });
         
@@ -265,5 +269,30 @@ public class SectorDetailDialog extends JDialog {
         // Actualizar el título de la pestaña de clientes con el nuevo conteo
         JTabbedPane parent = (JTabbedPane) getContentPane().getComponent(1);
         parent.setTitleAt(0, "Clientes (" + sector.contarClientes() + ")");
+    }
+    
+    /**
+     * Actualiza la tabla de clientes con los datos actuales del sector
+     */
+    private void actualizarTablaClientes(DefaultTableModel model) {
+        // Limpiar tabla
+        model.setRowCount(0);
+        
+        // Volver a cargar datos
+        List<Cliente> clientes = sector.getClientes();
+        for (Cliente cliente : clientes) {
+            Object[] fila = {
+                cliente.getRut(),
+                cliente.getNombre(),
+                cliente.getDomicilio(),
+                cliente.getSuscripcion() != null ? 
+                    cliente.getSuscripcion().getPlan().getNombrePlan() : "Sin Plan",
+                cliente.getSuscripcion() != null ? "Activo" : "Inactivo"
+            };
+            model.addRow(fila);
+        }
+        
+        // Actualizar contador
+        updateClientesTab();
     }
 }

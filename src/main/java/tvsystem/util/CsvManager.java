@@ -72,6 +72,11 @@ public class CsvManager {
         File archivo = new File(archivoActual);
         if (!archivo.exists()) {
             System.out.println("📁 Archivo nuevo: " + archivoActual);
+            System.out.println("🎯 Generando datos ficticios iniciales...");
+            
+            // Generar datos ficticios para archivo nuevo
+            DatosFicticiosGenerator.generarClientesFicticios(sectorService, clienteService, planService);
+            
             return true;
         }
         
@@ -83,29 +88,50 @@ public class CsvManager {
             
             // Leer cabecera
             String cabecera = reader.readLine();
-            if (cabecera == null || !cabecera.startsWith("TIPO,")) {
-                System.out.println("⚠ Archivo CSV vacío o formato incorrecto");
+            if (cabecera == null) {
+                System.out.println("⚠ Archivo CSV vacío");
+                return true;
+            }
+            
+            // Determinar formato (nuevo o antiguo)
+            boolean formatoAntiguo = cabecera.startsWith("TIPO,");
+            boolean formatoNuevo = cabecera.startsWith("SECTOR,");
+            
+            if (!formatoAntiguo && !formatoNuevo) {
+                System.out.println("⚠ Formato de CSV no reconocido");
                 return true;
             }
             
             while ((linea = reader.readLine()) != null) {
                 String[] datos = linea.split(",");
                 
-                if (datos.length >= 6 && "CLIENTE".equals(datos[0])) {
-                    try {
-                        String sector = datos[1];
-                        String nombre = datos[2];
-                        String rut = datos[3];
-                        String domicilio = datos[4];
-                        String codigoPlan = datos[5];
-                        
-                        boolean exitoso = clienteService.agregarCliente(sector, nombre, rut, domicilio, codigoPlan);
-                        if (exitoso) {
-                            clientesCargados++;
-                        }
-                    } catch (Exception e) {
-                        System.err.println("❌ Error al cargar cliente: " + linea);
+                try {
+                    String sector, nombre, rut, domicilio, codigoPlan;
+                    
+                    if (formatoAntiguo && datos.length >= 6 && "CLIENTE".equals(datos[0])) {
+                        // Formato antiguo: TIPO,SECTOR,NOMBRE,RUT,DOMICILIO,PLAN,...
+                        sector = datos[1];
+                        nombre = datos[2];
+                        rut = datos[3];
+                        domicilio = datos[4];
+                        codigoPlan = datos[5];
+                    } else if (formatoNuevo && datos.length >= 5) {
+                        // Formato nuevo: SECTOR,NOMBRE,RUT,DOMICILIO,PLAN,...
+                        sector = datos[0];
+                        nombre = datos[1];
+                        rut = datos[2];
+                        domicilio = datos[3];
+                        codigoPlan = datos[4];
+                    } else {
+                        continue; // Saltar líneas que no coinciden con ningún formato
                     }
+                    
+                    boolean exitoso = clienteService.agregarCliente(sector, nombre, rut, domicilio, codigoPlan);
+                    if (exitoso) {
+                        clientesCargados++;
+                    }
+                } catch (Exception e) {
+                    System.err.println("❌ Error al cargar cliente: " + linea);
                 }
             }
             
@@ -129,8 +155,8 @@ public class CsvManager {
         
         try (PrintWriter writer = new PrintWriter(new FileWriter(archivoActual))) {
             
-            // Cabecera con toda la información importante
-            writer.println("TIPO,SECTOR,NOMBRE,RUT,DOMICILIO,PLAN,FECHA_INICIO,FECHA_TERMINO,ESTADO_SUSCRIPCION,PRECIO_BASE,OFERTA_ACTIVA,DESCUENTO,PRECIO_FINAL");
+            // Cabecera optimizada - eliminando campos redundantes
+            writer.println("SECTOR,NOMBRE,RUT,DOMICILIO,PLAN,FECHA_INICIO,FECHA_TERMINO,ESTADO_SUSCRIPCION,PRECIO_BASE,DESCUENTO,PRECIO_FINAL");
             
             List<Cliente> clientes = clienteService.obtenerTodosLosClientes();
             for (Cliente cliente : clientes) {
@@ -138,7 +164,7 @@ public class CsvManager {
                     Suscripcion suscripcion = cliente.getSuscripcion();
                     PlanSector plan = suscripcion.getPlan();
                     
-                    writer.printf("CLIENTE,%s,%s,%s,%s,%s,%s,%s,%s,%d,%s,%.2f,%d%n",
+                    writer.printf("%s,%s,%s,%s,%s,%s,%s,%s,%d,%.2f,%d%n",
                         escapar(plan.getSectorAsociado()),
                         escapar(cliente.getNombre()),
                         escapar(cliente.getRut()),
@@ -148,7 +174,6 @@ public class CsvManager {
                         suscripcion.getFechaTermino() != null ? suscripcion.getFechaTermino() : "",
                         escapar(suscripcion.getEstado() != null ? suscripcion.getEstado() : "ACTIVA"),
                         plan.getPrecioMensual(),
-                        plan.getOfertaActiva(),
                         plan.getDescuento(),
                         plan.calcularPrecioFinal()
                     );
