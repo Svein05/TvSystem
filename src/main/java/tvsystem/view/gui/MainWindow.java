@@ -1,3 +1,4 @@
+
 package tvsystem.view.gui;
 
 import tvsystem.service.*;
@@ -191,8 +192,18 @@ public class MainWindow extends JFrame {
         
         infoPanel.add(archivoLabel);
         
-        // Panel derecho con boton guardar
+        // Panel derecho con botones de acción
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        
+        // Botón Reporte
+        JButton btnReporte = new JButton("Reporte");
+        btnReporte.setBackground(new Color(33, 150, 243));
+        btnReporte.setForeground(Color.WHITE);
+        btnReporte.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+        
+        btnReporte.addActionListener(e -> generarReporteAnalisis());
+        
+        // Botón Guardar
         JButton btnGuardar = new JButton("Guardar");
         btnGuardar.setBackground(new Color(76, 175, 80));
         btnGuardar.setForeground(Color.WHITE);
@@ -211,6 +222,7 @@ public class MainWindow extends JFrame {
             }
         });
         
+        actionPanel.add(btnReporte);
         actionPanel.add(btnGuardar);
         
         panel.add(infoPanel, BorderLayout.WEST);
@@ -1623,5 +1635,311 @@ public class MainWindow extends JFrame {
         
         dialog.add(mainPanel);
         dialog.setVisible(true);
+    }
+    
+    /**
+     * Genera y exporta un reporte completo de análisis de sectores en formato TXT
+     */
+    private void generarReporteAnalisis() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Guardar Reporte de Análisis");
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Archivos TXT (*.txt)", "txt"));
+        fileChooser.setSelectedFile(new java.io.File("reporte_analisis_sectores.txt"));
+        
+        int resultado = fileChooser.showSaveDialog(this);
+        if (resultado == JFileChooser.APPROVE_OPTION) {
+            java.io.File archivo = fileChooser.getSelectedFile();
+            String rutaArchivo = archivo.getAbsolutePath();
+            if (!rutaArchivo.endsWith(".txt")) {
+                rutaArchivo += ".txt";
+            }
+            
+            try (java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.FileWriter(rutaArchivo))) {
+                escribirReporteCompleto(writer);
+                
+                JOptionPane.showMessageDialog(this, 
+                    "Reporte generado exitosamente en:\n" + rutaArchivo, 
+                    "Reporte Exportado", 
+                    JOptionPane.INFORMATION_MESSAGE);
+                    
+            } catch (java.io.IOException e) {
+                JOptionPane.showMessageDialog(this, 
+                    "Error al generar el reporte:\n" + e.getMessage(), 
+                    "Error", 
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+    
+    /**
+     * Escribe el contenido completo del reporte de análisis
+     */
+    private void escribirReporteCompleto(java.io.PrintWriter writer) {
+        java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+        java.util.Date fechaActual = new java.util.Date();
+        
+        // Cabecera del reporte
+        writer.println("═════════════════════════════════════════════════════════════");
+        writer.println("           REPORTE DE ANÁLISIS DE SECTORES - TV SYSTEM");
+        writer.println("═════════════════════════════════════════════════════════════");
+        writer.println("Fecha de generación: " + dateFormat.format(fechaActual));
+        if (CsvManager.tieneArchivoSeleccionado()) {
+            writer.println("Archivo de datos: " + new java.io.File(CsvManager.getArchivoActual()).getName());
+        }
+        writer.println("═════════════════════════════════════════════════════════════");
+        writer.println();
+        
+        // Resumen ejecutivo
+        escribirResumenEjecutivo(writer);
+        
+        // Análisis detallado por sector
+        escribirAnalisisDetallado(writer);
+        
+        // Análisis de planes y ofertas
+        escribirAnalisisPlanes(writer);
+        
+        // Recomendaciones estratégicas
+        escribirRecomendaciones(writer);
+        
+        writer.println();
+        writer.println("═════════════════════════════════════════════════════════════");
+        writer.println("                    FIN DEL REPORTE");
+        writer.println("═════════════════════════════════════════════════════════════");
+    }
+    
+    /**
+     * Escribe el resumen ejecutivo del reporte
+     */
+    private void escribirResumenEjecutivo(java.io.PrintWriter writer) {
+        writer.println("📊 RESUMEN EJECUTIVO");
+        writer.println("─────────────────────────────────────────────────────────────");
+        
+        java.util.List<Sector> sectores = sectorService.obtenerTodosLosSectores();
+        int totalClientes = clienteService.contarClientesTotales();
+        int totalSectores = sectores.size();
+        java.util.List<PlanSector> planesConOferta = planService.obtenerPlanesConOferta();
+        
+        writer.println("• Total de sectores activos: " + totalSectores);
+        writer.println("• Total de clientes registrados: " + totalClientes);
+        writer.println("• Promedio de clientes por sector: " + (totalSectores > 0 ? (totalClientes / totalSectores) : 0));
+        writer.println("• Planes con ofertas activas: " + planesConOferta.size());
+        
+        // Identificar sector más y menos poblado
+        if (!sectores.isEmpty()) {
+            Sector sectorMayor = sectores.get(0);
+            Sector sectorMenor = sectores.get(0);
+            
+            for (Sector sector : sectores) {
+                int clientesSector = sector.contarClientes();
+                if (clientesSector > sectorMayor.contarClientes()) {
+                    sectorMayor = sector;
+                }
+                if (clientesSector < sectorMenor.contarClientes()) {
+                    sectorMenor = sector;
+                }
+            }
+            
+            writer.println("• Sector con mayor penetración: " + sectorMayor.getNombre() + " (" + sectorMayor.contarClientes() + " clientes)");
+            writer.println("• Sector con menor penetración: " + sectorMenor.getNombre() + " (" + sectorMenor.contarClientes() + " clientes)");
+        }
+        
+        writer.println();
+    }
+    
+    /**
+     * Escribe el análisis detallado por sector
+     */
+    private void escribirAnalisisDetallado(java.io.PrintWriter writer) {
+        writer.println("🏘️ ANÁLISIS DETALLADO POR SECTOR");
+        writer.println("─────────────────────────────────────────────────────────────");
+        
+        java.util.List<Sector> sectores = sectorService.obtenerTodosLosSectores();
+        sectores.sort((a, b) -> Integer.compare(b.contarClientes(), a.contarClientes())); // Ordenar por número de clientes descendente
+        
+        for (Sector sector : sectores) {
+            writer.println();
+            writer.println("🌍 SECTOR: " + sector.getNombre());
+            writer.println("   ├── Clientes activos: " + sector.contarClientes());
+            
+            // Análisis de planes en el sector
+            java.util.List<PlanSector> planesSector = planService.obtenerPlanesPorSector(sector.getNombre());
+            writer.println("   ├── Planes disponibles: " + planesSector.size());
+            
+            if (!planesSector.isEmpty()) {
+                long ingresoTotal = 0;
+                int planesConDescuento = 0;
+                
+                for (PlanSector plan : planesSector) {
+                    // Contar clientes con este plan
+                    java.util.List<Cliente> clientesConPlan = clienteService.obtenerClientesPorPlan(plan.getCodigoPlan());
+                    long ingresos = plan.calcularPrecioFinal() * clientesConPlan.size();
+                    ingresoTotal += ingresos;
+                    
+                    if (plan.getOfertaActiva()) {
+                        planesConDescuento++;
+                    }
+                    
+                    writer.printf("   │   ├── %s: %d clientes, $%,d c/u → $%,d total%n", 
+                        plan.getNombrePlan(), 
+                        clientesConPlan.size(),
+                        plan.calcularPrecioFinal(),
+                        ingresos);
+                        
+                    if (plan.getOfertaActiva()) {
+                        writer.printf("   │   │   └── 🏷️ OFERTA: %.0f%% descuento (Precio original: $%,d)%n",
+                            plan.getDescuento() * 100,
+                            plan.getPrecioMensual());
+                    }
+                }
+                
+                writer.printf("   ├── Ingresos estimados del sector: $%,d/mes%n", ingresoTotal);
+                writer.println("   ├── Planes con ofertas activas: " + planesConDescuento + "/" + planesSector.size());
+                
+                // Estado del sector
+                int clientesSector = sector.contarClientes();
+                String estadoSector;
+                if (clientesSector >= 100) {
+                    estadoSector = "🟢 EXCELENTE - Sector consolidado";
+                } else if (clientesSector >= 50) {
+                    estadoSector = "🟡 BUENO - Crecimiento estable";
+                } else if (clientesSector >= 25) {
+                    estadoSector = "🟠 MODERADO - Requiere atención";
+                } else {
+                    estadoSector = "🔴 CRÍTICO - Necesita intervención urgente";
+                }
+                writer.println("   └── Estado: " + estadoSector);
+            }
+        }
+        
+        writer.println();
+    }
+    
+    /**
+     * Escribe el análisis de planes y ofertas
+     */
+    private void escribirAnalisisPlanes(java.io.PrintWriter writer) {
+        writer.println("📋 ANÁLISIS DE PLANES Y OFERTAS");
+        writer.println("─────────────────────────────────────────────────────────────");
+        
+        java.util.List<PlanSector> todosLosPlanes = planService.obtenerTodosLosPlanes();
+        java.util.List<PlanSector> planesConOferta = planService.obtenerPlanesConOferta();
+        
+        // Estadísticas generales de ofertas
+        writer.println("📊 Estadísticas de Ofertas:");
+        writer.println("   ├── Total de planes: " + todosLosPlanes.size());
+        writer.println("   ├── Planes con ofertas: " + planesConOferta.size());
+        writer.printf("   └── Porcentaje de penetración de ofertas: %.1f%%%n", 
+            todosLosPlanes.size() > 0 ? (planesConOferta.size() * 100.0 / todosLosPlanes.size()) : 0);
+        
+        writer.println();
+        
+        // Análisis de ofertas por tipo de descuento
+        if (!planesConOferta.isEmpty()) {
+            writer.println("🏷️ Ofertas Activas por Categoría:");
+            
+            java.util.Map<String, java.util.List<PlanSector>> ofertasPorCategoria = new java.util.HashMap<>();
+            
+            for (PlanSector plan : planesConOferta) {
+                double descuento = plan.getDescuento();
+                String categoria;
+                if (descuento >= 0.25) {
+                    categoria = "Alto descuento (25%+)";
+                } else if (descuento >= 0.15) {
+                    categoria = "Descuento moderado (15-24%)";
+                } else {
+                    categoria = "Descuento básico (1-14%)";
+                }
+                
+                ofertasPorCategoria.computeIfAbsent(categoria, k -> new java.util.ArrayList<>()).add(plan);
+            }
+            
+            for (java.util.Map.Entry<String, java.util.List<PlanSector>> entry : ofertasPorCategoria.entrySet()) {
+                writer.println("   ├── " + entry.getKey() + ": " + entry.getValue().size() + " planes");
+                for (PlanSector plan : entry.getValue()) {
+                    java.util.List<Cliente> clientes = clienteService.obtenerClientesPorPlan(plan.getCodigoPlan());
+                    long ahorroTotal = (plan.getPrecioMensual() - plan.calcularPrecioFinal()) * clientes.size();
+                    writer.printf("   │   └── %s: %.0f%% desc., %d clientes, $%,d ahorro total/mes%n",
+                        plan.getCodigoPlan(),
+                        plan.getDescuento() * 100,
+                        clientes.size(),
+                        ahorroTotal);
+                }
+            }
+        }
+        
+        writer.println();
+    }
+    
+    /**
+     * Escribe las recomendaciones estratégicas
+     */
+    private void escribirRecomendaciones(java.io.PrintWriter writer) {
+        writer.println("💡 RECOMENDACIONES ESTRATÉGICAS");
+        writer.println("─────────────────────────────────────────────────────────────");
+        
+        java.util.List<Sector> sectores = sectorService.obtenerTodosLosSectores();
+        java.util.List<Sector> sectoresCriticos = new java.util.ArrayList<>();
+        java.util.List<Sector> sectoresExcelentes = new java.util.ArrayList<>();
+        
+        // Clasificar sectores
+        for (Sector sector : sectores) {
+            int clientes = sector.contarClientes();
+            if (clientes < 25) {
+                sectoresCriticos.add(sector);
+            } else if (clientes >= 100) {
+                sectoresExcelentes.add(sector);
+            }
+        }
+        
+        writer.println("📈 Recomendaciones de Crecimiento:");
+        if (!sectoresCriticos.isEmpty()) {
+            writer.println("   ├── ALTA PRIORIDAD - Sectores críticos (" + sectoresCriticos.size() + "):");
+            for (Sector sector : sectoresCriticos) {
+                writer.println("   │   └── " + sector.getNombre() + " (" + sector.contarClientes() + " clientes)");
+                writer.println("   │       → Implementar campaña de captación intensiva");
+                writer.println("   │       → Considerar descuentos agresivos (20-30%)");
+                writer.println("   │       → Evaluar alianzas locales o promociones dirigidas");
+            }
+        }
+        
+        writer.println("   ├── OPTIMIZACIÓN - Sectores exitosos:");
+        if (!sectoresExcelentes.isEmpty()) {
+            for (Sector sector : sectoresExcelentes) {
+                writer.println("   │   └── " + sector.getNombre() + " (" + sector.contarClientes() + " clientes)");
+                writer.println("   │       → Mantener calidad de servicio");
+                writer.println("   │       → Considerar planes premium");
+                writer.println("   │       → Usar como modelo para otros sectores");
+            }
+        } else {
+            writer.println("   │   └── Ningún sector ha alcanzado el nivel de excelencia (100+ clientes)");
+        }
+        
+        // Recomendaciones de ofertas
+        java.util.List<PlanSector> planesConOferta = planService.obtenerPlanesConOferta();
+        java.util.List<PlanSector> todosLosPlanes = planService.obtenerTodosLosPlanes();
+        
+        writer.println("   └── OFERTAS Y PROMOCIONES:");
+        double porcentajeOfertas = todosLosPlanes.size() > 0 ? (planesConOferta.size() * 100.0 / todosLosPlanes.size()) : 0;
+        
+        if (porcentajeOfertas < 30) {
+            writer.println("       → Aumentar penetración de ofertas (actual: " + String.format("%.1f", porcentajeOfertas) + "%)");
+            writer.println("       → Implementar ofertas estacionales o por sectores específicos");
+        } else if (porcentajeOfertas > 70) {
+            writer.println("       → Evaluar sostenibilidad de ofertas (actual: " + String.format("%.1f", porcentajeOfertas) + "%)");
+            writer.println("       → Considerar segmentación más específica de descuentos");
+        } else {
+            writer.println("       → Nivel de ofertas adecuado (actual: " + String.format("%.1f", porcentajeOfertas) + "%)");
+            writer.println("       → Mantener estrategia actual y monitorear resultados");
+        }
+        
+        writer.println();
+        writer.println("🎯 Métricas Clave a Monitorear:");
+        writer.println("   ├── Crecimiento mensual de clientes por sector");
+        writer.println("   ├── Efectividad de ofertas y descuentos");
+        writer.println("   ├── Ingresos promedio por cliente (ARPU)");
+        writer.println("   ├── Tasa de retención de clientes");
+        writer.println("   └── Penetración de mercado por zona geográfica");
+        
+        writer.println();
     }
 }

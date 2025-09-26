@@ -83,6 +83,7 @@ public class CsvManager {
         try (BufferedReader reader = new BufferedReader(new FileReader(archivo))) {
             String linea;
             int clientesCargados = 0;
+            Map<String, Double> descuentosPorPlan = new HashMap<>(); // Para evitar aplicar descuentos múltiples veces
             
             System.out.println("📂 Cargando datos desde: " + archivoActual);
             
@@ -107,6 +108,8 @@ public class CsvManager {
                 
                 try {
                     String sector, nombre, rut, domicilio, codigoPlan;
+                    double descuentoPlan = 0.0;
+                    boolean tieneDescuento = false;
                     
                     if (formatoAntiguo && datos.length >= 6 && "CLIENTE".equals(datos[0])) {
                         // Formato antiguo: TIPO,SECTOR,NOMBRE,RUT,DOMICILIO,PLAN,...
@@ -122,6 +125,21 @@ public class CsvManager {
                         rut = datos[2];
                         domicilio = datos[3];
                         codigoPlan = datos[4];
+                        
+                        // Si tiene formato completo con descuento (11 campos), extraer el descuento
+                        if (datos.length >= 11) {
+                            try {
+                                descuentoPlan = Double.parseDouble(datos[9]); // Campo DESCUENTO
+                                tieneDescuento = descuentoPlan > 0.0;
+                                
+                                // Almacenar descuento por plan para aplicarlo una sola vez
+                                if (tieneDescuento && !descuentosPorPlan.containsKey(codigoPlan)) {
+                                    descuentosPorPlan.put(codigoPlan, descuentoPlan);
+                                }
+                            } catch (NumberFormatException e) {
+                                descuentoPlan = 0.0;
+                            }
+                        }
                     } else {
                         continue; // Saltar líneas que no coinciden con ningún formato
                     }
@@ -135,7 +153,22 @@ public class CsvManager {
                 }
             }
             
+            // Aplicar descuentos a los planes después de cargar todos los clientes
+            for (Map.Entry<String, Double> entry : descuentosPorPlan.entrySet()) {
+                String codigoPlan = entry.getKey();
+                Double descuento = entry.getValue();
+                
+                PlanSector plan = planService.obtenerPlanPorCodigo(codigoPlan);
+                if (plan != null) {
+                    plan.activarOferta(descuento);
+                    System.out.println("✅ Descuento " + (descuento * 100) + "% aplicado al plan: " + codigoPlan);
+                }
+            }
+            
             System.out.println("✅ Datos cargados: " + clientesCargados + " clientes");
+            if (!descuentosPorPlan.isEmpty()) {
+                System.out.println("🎯 Ofertas restauradas: " + descuentosPorPlan.size() + " planes con descuentos");
+            }
             return true;
             
         } catch (IOException e) {
