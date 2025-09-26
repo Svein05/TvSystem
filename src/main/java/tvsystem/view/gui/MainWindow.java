@@ -392,7 +392,8 @@ public class MainWindow extends JFrame {
         
         // Acción del botón de descuento automático
         btnDescuentoAutomatico.addActionListener(e -> {
-            aplicarDescuentoAutomaticoConResumen();
+            int umbral = (Integer) umbralSpinner.getValue();
+            aplicarDescuentoAutomaticoConResumen(umbral);
         });
         
         panel.add(controlPanel, BorderLayout.CENTER);
@@ -1486,34 +1487,44 @@ public class MainWindow extends JFrame {
     /**
      * Aplica descuento automático a sectores críticos y muestra ventana de resumen
      */
-    private void aplicarDescuentoAutomaticoConResumen() {
+    private void aplicarDescuentoAutomaticoConResumen(int umbral) {
         try {
-            // Identificar sectores para captación
-            List<Sector> sectoresParaCaptacion = captacionService.identificarSectoresParaCaptacion();
+            // Identificar sectores para captación basado en el umbral seleccionado
+            List<Sector> sectoresParaCaptacion = captacionService.identificarSectoresParaCaptacion(umbral);
             
             if (sectoresParaCaptacion.isEmpty()) {
                 JOptionPane.showMessageDialog(this, 
-                    "No se encontraron sectores que requieran captación.", 
+                    "No se encontraron sectores que requieran captación con umbral de " + umbral + " clientes.", 
                     "Descuento Automático", 
                     JOptionPane.INFORMATION_MESSAGE);
                 return;
             }
             
+            // Mostrar información de descuentos escalonados
+            String mensaje = String.format(
+                "Se aplicarán descuentos escalonados a %d sectores:\n\n" +
+                "• Sectores muy críticos (0-33%% del umbral): 30%% descuento\n" +
+                "• Sectores críticos (34-66%% del umbral): 20%% descuento\n" +
+                "• Sectores moderados (67-99%% del umbral): 15%% descuento\n\n" +
+                "Umbral utilizado: %d clientes\n¿Continuar?",
+                sectoresParaCaptacion.size(), umbral
+            );
+            
             // Confirmar aplicación de descuentos
             int confirmacion = JOptionPane.showConfirmDialog(this,
-                "Se aplicará descuento del 15% a " + sectoresParaCaptacion.size() + " sectores.\n¿Continuar?",
-                "Confirmar Descuento Automático",
+                mensaje,
+                "Confirmar Descuento Escalonado",
                 JOptionPane.YES_NO_OPTION);
                 
             if (confirmacion != JOptionPane.YES_OPTION) {
                 return;
             }
             
-            // Aplicar descuentos
-            captacionService.ejecutarCampanaCaptacion();
+            // Aplicar descuentos con el umbral personalizado
+            captacionService.ejecutarCampanaCaptacionConUmbral(umbral);
             
             // Mostrar ventana de resumen
-            mostrarResumenDescuentos(sectoresParaCaptacion);
+            mostrarResumenDescuentos(sectoresParaCaptacion, umbral);
             
             // Actualizar la vista
             actualizarSectoresGrid(-1);
@@ -1529,33 +1540,50 @@ public class MainWindow extends JFrame {
     /**
      * Muestra ventana de resumen con los sectores a los que se aplicó el descuento
      */
-    private void mostrarResumenDescuentos(List<Sector> sectoresConDescuento) {
+    private void mostrarResumenDescuentos(List<Sector> sectoresConDescuento, int umbral) {
         // Crear ventana de diálogo
-        JDialog dialog = new JDialog(this, "Resumen de Descuentos Aplicados", true);
-        dialog.setSize(600, 400);
+        JDialog dialog = new JDialog(this, "Resumen de Descuentos Escalonados Aplicados", true);
+        dialog.setSize(700, 450);
         dialog.setLocationRelativeTo(this);
         
         // Panel principal
         JPanel mainPanel = new JPanel(new BorderLayout());
         
         // Título
-        JLabel titulo = new JLabel("Sectores con Descuento del 15% Aplicado", SwingConstants.CENTER);
+        JLabel titulo = new JLabel("Descuentos Escalonados Aplicados por Umbral", SwingConstants.CENTER);
         titulo.setFont(new Font("Arial", Font.BOLD, 16));
         titulo.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         mainPanel.add(titulo, BorderLayout.NORTH);
         
         // Tabla de sectores
-        String[] columnas = {"Sector", "Clientes Antes", "Planes Afectados", "Estado"};
-        Object[][] datos = new Object[sectoresConDescuento.size()][4];
+        String[] columnas = {"Sector", "Clientes", "% del Umbral", "Descuento Aplicado", "Categoría"};
+        Object[][] datos = new Object[sectoresConDescuento.size()][5];
         
         for (int i = 0; i < sectoresConDescuento.size(); i++) {
             Sector sector = sectoresConDescuento.get(i);
-            List<PlanSector> planes = planService.obtenerPlanesPorSector(sector.getNombre());
+            int clientes = sector.contarClientes();
+            double porcentajeUmbral = (double) clientes / umbral * 100;
+            
+            // Calcular el descuento que se aplicó
+            String descuentoTexto;
+            String categoria;
+            
+            if (porcentajeUmbral <= 33) {
+                descuentoTexto = "30%";
+                categoria = "Muy Crítico";
+            } else if (porcentajeUmbral <= 66) {
+                descuentoTexto = "20%";
+                categoria = "Crítico";
+            } else {
+                descuentoTexto = "15%";
+                categoria = "Moderado";
+            }
             
             datos[i][0] = sector.getNombre();
-            datos[i][1] = sector.contarClientes();
-            datos[i][2] = planes.size();
-            datos[i][3] = "✓ Descuento Aplicado";
+            datos[i][1] = clientes + "/" + umbral;
+            datos[i][2] = String.format("%.1f%%", porcentajeUmbral);
+            datos[i][3] = descuentoTexto;
+            datos[i][4] = categoria;
         }
         
         JTable tabla = new JTable(datos, columnas);
@@ -1571,13 +1599,14 @@ public class MainWindow extends JFrame {
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         
         // Panel de información adicional
-        JPanel infoPanel = new JPanel(new GridLayout(4, 1));
+        JPanel infoPanel = new JPanel(new GridLayout(5, 1));
         infoPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
         infoPanel.add(new JLabel("Total de sectores afectados: " + sectoresConDescuento.size()));
-        infoPanel.add(new JLabel("Descuento aplicado: 15%"));
+        infoPanel.add(new JLabel("Umbral utilizado: " + umbral + " clientes"));
+        infoPanel.add(new JLabel("Descuentos aplicados: 30% (Muy Crítico), 20% (Crítico), 15% (Moderado)"));
         infoPanel.add(new JLabel("Los descuentos se aplicaron a todos los planes de estos sectores."));
-        infoPanel.add(new JLabel("Nota: Los sectores mostrados tenían menos de 5 clientes."));
+        infoPanel.add(new JLabel("Nota: Los descuentos se guardan automáticamente en el archivo CSV."));
         
         // Botón de cerrar
         JPanel buttonPanel = new JPanel(new FlowLayout());

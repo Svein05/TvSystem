@@ -14,7 +14,11 @@ public class CaptacionService {
     private ClienteService clienteService;
     
     private static final int UMBRAL_SECTOR_DEBIL = 5;
-    private static final double DESCUENTO_CAPTACION = 0.15; // 15% de descuento
+    
+    // Descuentos escalonados basados en la criticidad del sector
+    private static final double DESCUENTO_CRITICO = 0.30;    // 30% - Sectores muy críticos (0-33% del umbral)
+    private static final double DESCUENTO_ALTO = 0.20;       // 20% - Sectores críticos (34-66% del umbral)
+    private static final double DESCUENTO_MODERADO = 0.15;   // 15% - Sectores moderados (67-99% del umbral)
     
     public CaptacionService(SectorService sectorService, 
                            PlanService planService,
@@ -28,14 +32,48 @@ public class CaptacionService {
         return sectorService.identificarSectoresDebiles(UMBRAL_SECTOR_DEBIL);
     }
     
+    /**
+     * Identifica sectores para captación basado en un umbral personalizado
+     */
+    public List<Sector> identificarSectoresParaCaptacion(int umbral) {
+        return sectorService.identificarSectoresDebiles(umbral);
+    }
+    
+    /**
+     * Calcula el descuento apropiado basado en qué tan por debajo del umbral está el sector
+     */
+    private double calcularDescuentoPorUmbral(int clientesSector, int umbral) {
+        if (clientesSector >= umbral) {
+            return 0.0; // Sin descuento si está en o por encima del umbral
+        }
+        
+        double porcentajeDelUmbral = (double) clientesSector / umbral;
+        
+        if (porcentajeDelUmbral <= 0.33) {
+            return DESCUENTO_CRITICO;      // 30% - Muy crítico
+        } else if (porcentajeDelUmbral <= 0.66) {
+            return DESCUENTO_ALTO;         // 20% - Crítico
+        } else {
+            return DESCUENTO_MODERADO;     // 15% - Moderado
+        }
+    }
+    
     public void ejecutarCampanaCaptacion() {
-        List<Sector> sectoresDebiles = identificarSectoresParaCaptacion();
+        ejecutarCampanaCaptacionConUmbral(UMBRAL_SECTOR_DEBIL);
+    }
+    
+    /**
+     * Ejecuta campaña de captación con un umbral personalizado
+     */
+    public void ejecutarCampanaCaptacionConUmbral(int umbral) {
+        List<Sector> sectoresDebiles = identificarSectoresParaCaptacion(umbral);
         
         System.out.println("=== CAMPAÑA DE CAPTACIÓN AUTOMÁTICA ===");
+        System.out.println("Umbral utilizado: " + umbral);
         System.out.println("Sectores identificados para captación: " + sectoresDebiles.size());
         
         for (Sector sector : sectoresDebiles) {
-            activarOfertaCaptacion(sector);
+            activarOfertaCaptacionConUmbral(sector, umbral);
         }
         
         if (sectoresDebiles.isEmpty()) {
@@ -47,10 +85,10 @@ public class CaptacionService {
         System.out.println("\n--- Activando oferta en sector: " + sector.getNombre() + " ---");
         System.out.println("Clientes actuales: " + sector.contarClientes());
         
-        // Activar descuento en todos los planes del sector
-        planService.activarOfertaPorSector(sector.getNombre(), DESCUENTO_CAPTACION);
+        // Activar descuento en todos los planes del sector con descuento fijo del 15%
+        planService.activarOfertaPorSector(sector.getNombre(), DESCUENTO_MODERADO);
         
-        System.out.println("✓ Oferta del " + (DESCUENTO_CAPTACION * 100) + "% activada en todos los planes");
+        System.out.println("✓ Oferta del " + (DESCUENTO_MODERADO * 100) + "% activada en todos los planes");
         
         // Mostrar planes con ofertas activas
         List<PlanSector> planes = planService.obtenerPlanesPorSector(sector.getNombre());
@@ -59,6 +97,33 @@ public class CaptacionService {
                              ": $" + plan.getPrecioMensual() + 
                              " → $" + plan.calcularPrecioFinal() + 
                              " (Oferta activa)");
+        }
+    }
+    
+    /**
+     * Activa oferta con descuento escalonado basado en el umbral
+     */
+    private void activarOfertaCaptacionConUmbral(Sector sector, int umbral) {
+        int clientesActuales = sector.contarClientes();
+        double descuentoCalculado = calcularDescuentoPorUmbral(clientesActuales, umbral);
+        
+        System.out.println("\n--- Activando oferta escalonada en sector: " + sector.getNombre() + " ---");
+        System.out.println("Clientes actuales: " + clientesActuales + " / Umbral: " + umbral);
+        System.out.printf("Porcentaje del umbral: %.1f%% → Descuento: %.0f%%\n", 
+                         (double) clientesActuales / umbral * 100, descuentoCalculado * 100);
+        
+        // Activar descuento calculado en todos los planes del sector
+        planService.activarOfertaPorSector(sector.getNombre(), descuentoCalculado);
+        
+        System.out.println("✓ Oferta del " + (descuentoCalculado * 100) + "% activada en todos los planes");
+        
+        // Mostrar planes con ofertas activas
+        List<PlanSector> planes = planService.obtenerPlanesPorSector(sector.getNombre());
+        for (PlanSector plan : planes) {
+            System.out.println("  - " + plan.getNombrePlan() + 
+                             ": $" + plan.getPrecioMensual() + 
+                             " → $" + plan.calcularPrecioFinal() + 
+                             " (Descuento " + (descuentoCalculado * 100) + "%)");
         }
     }
     
