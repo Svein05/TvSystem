@@ -20,6 +20,7 @@ public class MainWindow extends JFrame {
     private SectorService sectorService;
     private ClienteService clienteService;
     private PlanService planService;
+    private CaptacionService captacionService;
     
     // Componentes de la interfaz
     private JTabbedPane tabbedPane;
@@ -58,6 +59,7 @@ public class MainWindow extends JFrame {
         this.sectorService = sectorService;
         this.clienteService = clienteService;
         this.planService = planService;
+        this.captacionService = captacionService;
         
         initComponents();
         configurarCierreVentana();
@@ -368,7 +370,7 @@ public class MainWindow extends JFrame {
         panel.setBorder(BorderFactory.createTitledBorder("Sectores con Pocos Clientes"));
         panel.setPreferredSize(new Dimension(300, 80));
         
-        // Panel de controles - solo filtro
+        // Panel de controles - filtro y descuento automático
         JPanel controlPanel = new JPanel(new FlowLayout());
         controlPanel.add(new JLabel("Umbral mínimo:"));
         
@@ -378,11 +380,19 @@ public class MainWindow extends JFrame {
         JButton btnFiltrar = new JButton("Filtrar");
         controlPanel.add(btnFiltrar);
         
+        JButton btnDescuentoAutomatico = new JButton("Aplicar Descuento Automático");
+        controlPanel.add(btnDescuentoAutomatico);
+        
         // Acción del botón filtrar - solo actualiza el grid visual
         btnFiltrar.addActionListener(e -> {
             int umbral = (Integer) umbralSpinner.getValue();
             // Actualizar grid de sectores con colores críticos
             actualizarSectoresGrid(umbral);
+        });
+        
+        // Acción del botón de descuento automático
+        btnDescuentoAutomatico.addActionListener(e -> {
+            aplicarDescuentoAutomaticoConResumen();
         });
         
         panel.add(controlPanel, BorderLayout.CENTER);
@@ -1471,5 +1481,118 @@ public class MainWindow extends JFrame {
         }
         
         return null;
+    }
+    
+    /**
+     * Aplica descuento automático a sectores críticos y muestra ventana de resumen
+     */
+    private void aplicarDescuentoAutomaticoConResumen() {
+        try {
+            // Identificar sectores para captación
+            List<Sector> sectoresParaCaptacion = captacionService.identificarSectoresParaCaptacion();
+            
+            if (sectoresParaCaptacion.isEmpty()) {
+                JOptionPane.showMessageDialog(this, 
+                    "No se encontraron sectores que requieran captación.", 
+                    "Descuento Automático", 
+                    JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+            
+            // Confirmar aplicación de descuentos
+            int confirmacion = JOptionPane.showConfirmDialog(this,
+                "Se aplicará descuento del 15% a " + sectoresParaCaptacion.size() + " sectores.\n¿Continuar?",
+                "Confirmar Descuento Automático",
+                JOptionPane.YES_NO_OPTION);
+                
+            if (confirmacion != JOptionPane.YES_OPTION) {
+                return;
+            }
+            
+            // Aplicar descuentos
+            captacionService.ejecutarCampanaCaptacion();
+            
+            // Mostrar ventana de resumen
+            mostrarResumenDescuentos(sectoresParaCaptacion);
+            
+            // Actualizar la vista
+            actualizarSectoresGrid(-1);
+            
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Error al aplicar descuentos: " + e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    /**
+     * Muestra ventana de resumen con los sectores a los que se aplicó el descuento
+     */
+    private void mostrarResumenDescuentos(List<Sector> sectoresConDescuento) {
+        // Crear ventana de diálogo
+        JDialog dialog = new JDialog(this, "Resumen de Descuentos Aplicados", true);
+        dialog.setSize(600, 400);
+        dialog.setLocationRelativeTo(this);
+        
+        // Panel principal
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        
+        // Título
+        JLabel titulo = new JLabel("Sectores con Descuento del 15% Aplicado", SwingConstants.CENTER);
+        titulo.setFont(new Font("Arial", Font.BOLD, 16));
+        titulo.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        mainPanel.add(titulo, BorderLayout.NORTH);
+        
+        // Tabla de sectores
+        String[] columnas = {"Sector", "Clientes Antes", "Planes Afectados", "Estado"};
+        Object[][] datos = new Object[sectoresConDescuento.size()][4];
+        
+        for (int i = 0; i < sectoresConDescuento.size(); i++) {
+            Sector sector = sectoresConDescuento.get(i);
+            List<PlanSector> planes = planService.obtenerPlanesPorSector(sector.getNombre());
+            
+            datos[i][0] = sector.getNombre();
+            datos[i][1] = sector.contarClientes();
+            datos[i][2] = planes.size();
+            datos[i][3] = "✓ Descuento Aplicado";
+        }
+        
+        JTable tabla = new JTable(datos, columnas);
+        tabla.setRowHeight(25);
+        tabla.getTableHeader().setReorderingAllowed(false);
+        
+        // Configurar colores de la tabla
+        tabla.setGridColor(Color.LIGHT_GRAY);
+        tabla.getTableHeader().setBackground(new Color(70, 130, 180));
+        tabla.getTableHeader().setForeground(Color.WHITE);
+        
+        JScrollPane scrollPane = new JScrollPane(tabla);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        
+        // Panel de información adicional
+        JPanel infoPanel = new JPanel(new GridLayout(4, 1));
+        infoPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        infoPanel.add(new JLabel("Total de sectores afectados: " + sectoresConDescuento.size()));
+        infoPanel.add(new JLabel("Descuento aplicado: 15%"));
+        infoPanel.add(new JLabel("Los descuentos se aplicaron a todos los planes de estos sectores."));
+        infoPanel.add(new JLabel("Nota: Los sectores mostrados tenían menos de 5 clientes."));
+        
+        // Botón de cerrar
+        JPanel buttonPanel = new JPanel(new FlowLayout());
+        JButton btnCerrar = new JButton("Cerrar");
+        btnCerrar.addActionListener(e -> dialog.dispose());
+        buttonPanel.add(btnCerrar);
+        
+        // Panel inferior que contiene info y botón
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.add(infoPanel, BorderLayout.CENTER);
+        bottomPanel.add(buttonPanel, BorderLayout.SOUTH);
+        
+        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
+        
+        dialog.add(mainPanel);
+        dialog.setVisible(true);
     }
 }
