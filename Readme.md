@@ -2,12 +2,7 @@
 
 ## 📋 Descripción
 
-TvSystem es una aplicación integral de gestión para empresas de televisión por cable que permite administrar clientes, sectores, planes de servicio y realizar captación automática de clientes. El sistema ofrece tanto una interfaz gráfica de usuario moderna como funcionalidades de importación/expor- **Fechas**: Validación de coherencia temporal
-
-## 👥 Autores
-
-- 👨‍💻 **Elias Manriquez** - Desarrollo backend y servicios
-- 🎨 **Maximiliano Rodriguez** - Desarrollo frontend y arquitecturaión de datos mediante archivos CSV.
+TvSystem es una aplicación integral de gestión para empresas de televisión por cable que permite administrar clientes, sectores, planes de servicio y realizar captación automática de clientes. El sistema ofrece tanto una interfaz gráfica de usuario moderna como funcionalidades de importación/exportación de datos mediante archivos CSV.
 
 ### ⭐ Características Principales
 
@@ -75,61 +70,47 @@ VILLA_ALEMANA,Maria Gonzalez,78.314.061-6,Calle del Carmen 741,PREMIUM_VILLA_ALE
 #### 👥 1. Gestión de Clientes
 
 **➕ Agregar Cliente:**
-- 🖱️ haz click en la pestaña "Gestion de Clientes" ubicada en la esquina superior izquierda
-- 🖱️ haz click en la pestaña "Agregar Cliente"
+- 🖱️ Haga clic en la pestaña "Gestión de Clientes" ubicada en la esquina superior izquierda
+- 🖱️ Haga clic en la pestaña "Agregar Cliente"
 - ✍️ Complete los campos: Nombre, RUT, Domicilio, Sector y Plan
+- ✅ Hay 3 tipos de planes distintos: Básico, Familiar y Premium.
 - 💾 Haga clic en "Aceptar"
-- ✅ El sistema validará automáticamente el RUT chileno e indicará que ha sido guardado con exito
+- ✅ El sistema validará automáticamente el RUT chileno e indicará que ha sido guardado con éxito
 
 **🔍 Buscar y Modificar:**
-- 🔎 Use la barra de búsqueda para filtrar clientes por zonas especificas, planes o estado. Tambien se puede ordenar clientes por RUT, nombre, zona o planes
+- 🔎 Use la barra de búsqueda para filtrar clientes por zonas específicas, planes o estado. También se puede ordenar clientes por RUT, nombre, zona o planes
 - 👆 Seleccione un cliente de la tabla para ver/editar/eliminar
 - ✏️ Modifique información en el panel de detalles
-> Para modificar nombre o domicilio haz click en editar (botón ubicado abajo en el centro) si deseas editar el estado del plan haz click en ver detalles y luego en suscripción.  
+> Para modificar nombre o domicilio haga clic en editar (botón ubicado abajo en el centro). Si desea editar el estado del plan haga clic en ver detalles y luego en suscripción.  
 
 #### 🏘️ 2. Visualización de Sectores
 
 **📋 Panel de Sectores:**
 - 🗂️ Vista organizada en cuadrícula con botones para cada sector
 - 📊 Cada botón muestra: nombre del sector, número de clientes e ingresos
-- 🎨 Indicadores visuales de colores para identificar sectores con problemas
-- 🖱️ Doble clic en cualquier sector para ver información detallada
+- 🎨 Indicadores visuales de colores para identificar sectores en gráficos
+- 🖱️ Haga clic en cualquier sector para ver información detallada
 
 **📝 Detalles del Sector:**
-- 📋 Lista completa de clientes del sector
-- 📦 Planes disponibles y sus características
+- 📋 Pestaña cliente con una lista completa de clientes del sector
+- ✏️ También se pueden editar los clientes desde esta pestaña 
 - 📈 Estadísticas de ocupación y ofertas activas
 
-#### 📋 3. Gestión de Planes
+#### 🎯 3. Sistema de Captación
 
-**📊 Consultar Planes:**
-- 📑 Pestaña "Planes" muestra todos los planes disponibles
-- 🔽 Filtros por sector y estado de oferta
-- 💰 Información detallada de precios y descuentos
+- 🔍 El sistema identifica sectores con menos de X clientes. Usted podrá determinarlo en la pestaña "Gestión de Sectores" ubicada en la parte de abajo, donde podrá elegir el umbral mínimo para cada sector. Luego debe presionar el botón "Filtrar" y los sectores que tengan menos del mínimo se marcarán en rojo 
+- 💸 También tendrá la opción de aplicar descuento automáticamente siguiendo los siguientes criterios: 
+    - Sectores muy críticos (0-33% del umbral): 30% descuento
+    - Sectores críticos (34-66% del umbral): 20% descuento  
+    - Sectores moderados (67-99% del umbral): 15% descuento
+- 👀 Luego de aplicar el descuento se mostrará una pestaña donde podemos visualizar los descuentos aplicados según el umbral seleccionado, también podremos ver en qué categorías se encuentran los sectores (Crítico, Muy Crítico, Moderado)
+- 🎯 También podrá ver el resumen general ubicado en la parte de arriba a la izquierda en la pestaña "Gestión de Sectores" donde se muestra información como en qué sector hay más clientes, menos clientes, mayores ingresos, y el promedio de clientes.
 
-**🔄 Activar/Desactivar Ofertas:**
-- 👆 Seleccione un plan de la lista
-- ⚙️ Use los controles para modificar ofertas y descuentos
-- ⚡ Los cambios se aplican inmediatamente
-
-#### 🎯 4. Sistema de Captación
-
-**🤖 Captación Automática:**
-- 🔍 El sistema identifica sectores con menos de 5 clientes como "débiles"
-- 💸 Activa automáticamente descuentos del 15% en planes de esos sectores
-- 🎯 Accesible desde el menú "Captación"
-
-**📊 Monitoreo:**
-- 👀 Vista de sectores que requieren captación
-- 📈 Seguimiento de efectividad de las ofertas
-- 📋 Reportes de crecimiento por sector
-
-#### 📊 5. Reportes y Estadísticas
+#### 📊 4. Reportes y Estadísticas
 
 **📈 Gráficos Disponibles:**
 - 🥧 Distribución de clientes por sector (gráfico circular)
-- 📊 Comparación de precios entre planes (gráfico de barras)
-- 📈 Evolución de suscripciones por período
+- 📊 Ingresos por sector (gráfico de barras)
 
 **📊 Datos Estadísticos:**
 - 👥 Total de clientes registrados
@@ -191,68 +172,6 @@ src/main/java/tvsystem/
 - 📋 **PlanService**: Manejo de planes, precios y ofertas
 - 🎯 **CaptacionService**: Lógica de captación automática y ofertas estratégicas
 
-## 🔧 Solución de Problemas
-
-### ⚠️ Problemas Comunes
-
-#### 🚫 Error de Inicialización
-**🔍 Síntoma**: La aplicación no inicia o falla en el arranque
-**🔧 Solución**:
-1. ☕ Verificar versión de Java (mínimo Java 11)
-2. 📋 Revisar logs en consola para errores específicos
-3. 📦 Asegurar que todas las dependencias estén disponibles
-
-#### 📄 Error de Archivo CSV
-**🔍 Síntoma**: No se pueden cargar datos desde CSV
-**🔧 Solución**:
-1. 📊 Verificar formato del archivo CSV
-2. 🔤 Comprobar codificación del archivo (debe ser UTF-8)
-3. 🆔 Validar que no existan RUTs duplicados o inválidos
-
-#### 🐌 Problemas de Rendimiento
-**🔍 Síntoma**: La aplicación se vuelve lenta con muchos datos
-**🔧 Solución**:
-1. ⚡ Limitar la cantidad de datos cargados inicialmente
-2. 🔽 Usar filtros en las búsquedas y visualizaciones
-3. 🚀 Considerar aumentar memoria JVM: `java -Xmx512m -jar...`
-
-#### 🖥️ Interfaz Gráfica No Responde
-**🔍 Síntoma**: La ventana principal no responde
-**🔧 Solución**:
-1. 🔄 Forzar cierre y reiniciar aplicación
-2. 💾 Verificar disponibilidad de memoria del sistema
-3. 🚫 Comprobar que no hay procesos bloqueantes en segundo plano
-
-### 📊 Logs y Diagnóstico
-
-El sistema proporciona información detallada de diagnóstico:
-
-```java
-// Para ejecutar diagnóstico del sistema
-TvSystemApplication app = new TvSystemApplication();
-app.inicializar();
-app.diagnosticarSistema();
-app.mostrarInformacionSistema();
-```
-
-## 🤝 Contribución
-
-### 👨‍💻 Guías para Desarrolladores
-
-1. 🏗️ **Seguir la arquitectura en capas** establecida
-2. 🎯 **Mantener separación de responsabilidades** entre servicios
-3. ✅ **Implementar validaciones** en la capa de servicio
-4. 📚 **Documentar cambios** en interfaces públicas
-5. 🧪 **Probar funcionalidades** con datos de prueba
-
-### 📝 Estándares de Código
-
-- 🇪🇸 Nomenclatura en español para elementos de negocio
-- 📖 Comentarios JavaDoc para métodos públicos
-- ⚠️ Manejo de excepciones informativo
-- ✅ Validación de parámetros de entrada
-
-
 ## � Tecnologías Utilizadas
 
 ### 🔧 Backend
@@ -271,21 +190,6 @@ app.mostrarInformacionSistema();
 - **Inyección de dependencias**: Manual mediante constructores
 - **Almacenamiento en memoria**: Con persistencia opcional en CSV
 
-## 🌟 Características Técnicas Avanzadas
-
-### 🎯 Sistema de Captación Inteligente
-```java
-// Configuración automática de ofertas por sectores débiles
-private static final int UMBRAL_SECTOR_DEBIL = 5;
-private static final double DESCUENTO_CAPTACION = 0.15;
-```
-
-### 📊 Análisis de Sectores en Tiempo Real
-- **Detección automática** de sectores con baja captación (< 5 clientes)
-- **Ofertas dinámicas** activadas automáticamente
-- **Cálculo de penetración de mercado** por sector
-- **Identificación de sectores prioritarios** (≤ 1 cliente)
-
 ### ✅ Validaciones Robustas
 - **Validación de RUT chileno** con algoritmo de dígito verificador
 - **Formato CSV flexible** con manejo de errores
@@ -297,16 +201,6 @@ private static final double DESCUENTO_CAPTACION = 0.15;
 - **3 tipos de planes base**: Básico ($15.000), Premium ($25.000), Familiar ($35.000)
 - **Gráficos interactivos** con colores personalizados
 - **Exportación/importación** de datos en formato CSV
-
-## 🔍 Detalles Técnicos de Implementación
-
-### 📁 Gestión de Archivos CSV
-El sistema maneja archivos CSV con el siguiente formato:
-```csv
-sector,nombre,rut,domicilio,plan,precioMensual,ofertaActiva,descuento
-VALPARAISO,Juan Pérez,12345678-9,Av. Brasil 123,BASICO_VALPARAISO,15000,false,0.0
-VINA_DEL_MAR,María González,87654321-K,Calle Libertad 456,PREMIUM_VINA_DEL_MAR,25000,true,0.15
-```
 
 ### 🎯 Algoritmo de Captación Automática
 1. **Identificación**: Detecta sectores con menos de 5 clientes
@@ -323,14 +217,6 @@ VINA_DEL_MAR,María González,87654321-K,Calle Libertad 456,PREMIUM_VINA_DEL_MAR
 
 ## 🧪 Testing y Diagnóstico
 
-### 🔬 Herramientas de Diagnóstico
-```java
-TvSystemApplication app = new TvSystemApplication();
-app.inicializar();
-app.diagnosticarSistema();      // Verifica estado del sistema
-app.mostrarInformacionSistema(); // Muestra estadísticas
-```
-
 ### ⚡ Verificaciones Automáticas
 - **Integridad de repositorios**: Verifica inicialización correcta
 - **Validación de servicios**: Comprueba dependencias
@@ -343,7 +229,7 @@ app.mostrarInformacionSistema(); // Muestra estadísticas
 - **Tiempo de inicialización**: < 2 segundos promedio
 - **Capacidad de clientes**: Ilimitada (limitado por memoria)
 - **Sectores soportados**: Configurable (14 por defecto)
-- **Planes por sector**: 3 planes base + personalizados
+- **Planes por sector**: 3 planes base 
 
 ### 🎯 KPIs de Captación
 - **Tasa de captación**: Clientes nuevos por sector/mes
@@ -359,41 +245,22 @@ app.mostrarInformacionSistema(); // Muestra estadísticas
 - **Manejo de excepciones**: Error handling robusto en todas las capas
 - **Logs detallados**: Trazabilidad completa de operaciones
 
-### ✅ Validaciones Específicas
-- **RUT chileno**: Algoritmo de dígito verificador
-- **Rangos de precios**: Validación de montos positivos
-- **Descuentos**: Rango válido entre 0% y 100%
-- **Fechas**: Validación de coherencia temporal
-
 ## 👥 Autores
 
-- 👨‍💻 **Elias Manriquez** - Desarrollo backend y servicios
-- 🎨 **Maximiliano Rodriguez** - Desarrollo frontend y arquitectura
+### 👨‍💻 **Elias Manriquez**
+- 🔧 Desarrollo del sistema de servicios y repositorios
+- 🎯 Implementación del algoritmo de captación automática de clientes
+- 📊 Creación del sistema de análisis de sectores débiles
+- ⚙️ Desarrollo de validaciones robustas (RUT chileno, datos de entrada)
+- 🗄️ Arquitectura de almacenamiento en memoria y gestión de datos
+- 🔍 Sistema de reportes y estadísticas avanzadas
+- 🛠️ Configuración de Maven y estructura del proyecto
 
-## � Autores
-
-Este proyecto está bajo la **Licencia MIT** - ver el archivo `LICENSE` para más detalles.
-
-## 🤝 Contribuciones
-
-Las contribuciones son bienvenidas. Por favor:
-
-1. 🍴 Fork del proyecto
-2. 🔄 Crear una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. ✅ Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. 📤 Push a la rama (`git push origin feature/AmazingFeature`)
-5. 🔃 Abrir un Pull Request
-
-### 📋 Guidelines de Contribución
-- Seguir los estándares de código establecidos
-- Incluir tests para nuevas funcionalidades
-- Documentar cambios en el README si es necesario
-- Mantener la arquitectura en capas existente
-
-## �👥 Autores
-
-- 👨‍💻 **Elias Manriquez** - Desarrollo backend y servicios
-- 🎨 **Maximiliano Rodriguez** - Desarrollo frontend y arquitectura
-
-
-
+### 🎨 **Maximiliano Rodriguez** 
+- 🖥️ Diseño e implementación de la interfaz gráfica principal (MainWindow)
+- 📋 Desarrollo de ventanas de diálogo y formularios interactivos
+- 📊 Creación de gráficos y visualizaciones de datos (circular y barras)
+- 🎨 Diseño de la experiencia de usuario y flujos de navegación
+- 🗂️ Implementación del sistema de cuadrícula de sectores con indicadores visuales
+- 📄 Desarrollo del sistema de importación/exportación CSV
+- 🔄 Integración entre frontend y backend para funcionalidades completas
