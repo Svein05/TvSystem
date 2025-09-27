@@ -3,6 +3,7 @@ package tvsystem.service;
 import tvsystem.model.Sector;
 import tvsystem.repository.SectorRepository;
 import tvsystem.util.DataInitializer;
+import tvsystem.exception.SectorNoEncontradoException;
 import java.util.*;
 
 /**
@@ -32,7 +33,23 @@ public class SectorService {
         return sectorRepository.findAllNombres();
     }
     
-    public Sector obtenerSectorPorNombre(String nombre) {
+    public Sector obtenerSectorPorNombre(String nombre) throws SectorNoEncontradoException {
+        Sector sector = sectorRepository.findByNombre(nombre);
+        if (sector == null) {
+            int sectoresDisponibles = sectorRepository.findAll().size();
+            throw new SectorNoEncontradoException(
+                "Sector '" + nombre + "' no encontrado en el sistema", 
+                nombre, 
+                sectoresDisponibles
+            );
+        }
+        return sector;
+    }
+    
+    /**
+     * Versión que no lanza excepción para compatibilidad hacia atrás
+     */
+    public Sector buscarSectorPorNombre(String nombre) {
         return sectorRepository.findByNombre(nombre);
     }
     

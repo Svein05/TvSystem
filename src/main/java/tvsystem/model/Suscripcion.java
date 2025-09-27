@@ -158,4 +158,39 @@ public class Suscripcion {
         this.estado = "ACTIVA";
         return "ACTIVA";
     }
+    
+    // -- SOBREESCRITURA DE MÉTODOS --
+    
+    @Override
+    public String toString() {
+        return "Suscripcion{" +
+                "fechaInicio=" + fechaInicio +
+                ", fechaTermino=" + fechaTermino +
+                ", estado='" + estado + '\'' +
+                ", cliente=" + (cliente != null ? cliente.getNombre() : "Sin cliente") +
+                ", plan=" + (plan != null ? plan.getNombrePlan() : "Sin plan") +
+                ", pagado=" + pagado +
+                ", proximoVencimiento=" + proximoVencimiento +
+                '}';
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        
+        Suscripcion that = (Suscripcion) obj;
+        
+        if (cliente != null ? !cliente.getRut().equals(that.cliente != null ? that.cliente.getRut() : null) : that.cliente != null) return false;
+        if (plan != null ? !plan.getCodigoPlan().equals(that.plan != null ? that.plan.getCodigoPlan() : null) : that.plan != null) return false;
+        return fechaInicio != null ? fechaInicio.equals(that.fechaInicio) : that.fechaInicio == null;
+    }
+    
+    @Override
+    public int hashCode() {
+        int result = fechaInicio != null ? fechaInicio.hashCode() : 0;
+        result = 31 * result + (cliente != null ? cliente.getRut().hashCode() : 0);
+        result = 31 * result + (plan != null ? plan.getCodigoPlan().hashCode() : 0);
+        return result;
+    }
 }

@@ -4,6 +4,10 @@ import tvsystem.model.*;
 import tvsystem.repository.*;
 import tvsystem.util.RutValidator;
 import tvsystem.util.CsvManager;
+import tvsystem.util.LoggerHelper;
+import tvsystem.exception.ClienteInvalidoException;
+import tvsystem.exception.SectorNoEncontradoException;
+import tvsystem.exception.SuscripcionInvalidaException;
 import java.util.*;
 
 /**
@@ -15,6 +19,8 @@ public class ClienteService {
     private ClienteRepository clienteRepository;
     private SectorRepository sectorRepository;
     private PlanRepository planRepository;
+    private SectorService sectorService;
+    private PlanService planService;
     
     public ClienteService(ClienteRepository clienteRepository, 
                          SectorRepository sectorRepository,
@@ -24,27 +30,45 @@ public class ClienteService {
         this.planRepository = planRepository;
     }
     
+    /**
+     * Configura las referencias a otros servicios (evita dependencias circulares)
+     */
+    public void configurarServicios(SectorService sectorService, PlanService planService) {
+        this.sectorService = sectorService;
+        this.planService = planService;
+    }
+    
     public boolean agregarCliente(String nombreSector, String nombre, String rut, 
-                                String domicilio, String codigoPlan) {
+                                String domicilio, String codigoPlan) throws ClienteInvalidoException, SectorNoEncontradoException {
         // Validar RUT
         if (!RutValidator.validarRut(rut)) {
-            throw new IllegalArgumentException("RUT inválido: " + rut);
+            throw new ClienteInvalidoException("RUT inválido: " + rut, "RUT_INVALIDO", rut);
         }
         
         // Verificar que no exista el cliente
         if (clienteRepository.exists(rut)) {
-            throw new IllegalArgumentException("Ya existe un cliente con RUT: " + rut);
+            throw new ClienteInvalidoException("Ya existe un cliente con RUT: " + rut, "RUT_DUPLICADO", rut);
+        }
+        
+        // Validar datos básicos
+        if (nombre == null || nombre.trim().isEmpty()) {
+            throw new ClienteInvalidoException("El nombre del cliente no puede estar vacío", "NOMBRE_VACIO", rut);
+        }
+        
+        if (domicilio == null || domicilio.trim().isEmpty()) {
+            throw new ClienteInvalidoException("El domicilio del cliente no puede estar vacío", "DOMICILIO_VACIO", rut);
         }
         
         // Verificar que exista el sector
         if (!sectorRepository.exists(nombreSector)) {
-            throw new IllegalArgumentException("Sector no encontrado: " + nombreSector);
+            int sectoresDisponibles = sectorRepository.findAll().size();
+            throw new SectorNoEncontradoException("Sector no encontrado: " + nombreSector, nombreSector, sectoresDisponibles);
         }
         
         // Verificar que exista el plan
         PlanSector plan = planRepository.findByCodigo(codigoPlan);
         if (plan == null) {
-            throw new IllegalArgumentException("Plan no encontrado: " + codigoPlan);
+            throw new ClienteInvalidoException("Plan no encontrado: " + codigoPlan, "PLAN_NO_ENCONTRADO", rut);
         }
         
         // Crear cliente
@@ -113,17 +137,20 @@ public class ClienteService {
         if (cliente != null && cliente.getSuscripcion() != null) {
             cliente.getSuscripcion().setEstado(nuevoEstado);
             
-            // IMPORTANTE: Guardar los cambios en el CSV
-            SectorService sectorService = new SectorService(sectorRepository);
-            PlanService planService = new PlanService(planRepository);
-            boolean guardado = CsvManager.guardarDatos(sectorService, this, planService);
-            
-            if (guardado) {
-                System.out.println("✅ Estado de suscripción actualizado y guardado para: " + cliente.getNombre());
+            // IMPORTANTE: Guardar los cambios en el CSV usando servicios inyectados
+            if (sectorService != null && planService != null) {
+                boolean guardado = CsvManager.guardarDatos(sectorService, this, planService);
+                
+                if (guardado) {
+                    LoggerHelper.success("✅ Estado de suscripción actualizado y guardado para: " + cliente.getNombre());
+                } else {
+                    LoggerHelper.error("❌ Error al guardar cambios de estado para: " + cliente.getNombre());
+                }
+                return guardado;
             } else {
-                System.out.println("❌ Error al guardar cambios de estado para: " + cliente.getNombre());
+                LoggerHelper.warning("⚠️ Servicios no configurados, cambios no guardados en CSV");
+                return false;
             }
-            return guardado;
         }
         return false;
     }
@@ -136,5 +163,41 @@ public class ClienteService {
             }
         }
         return clientesFiltrados;
+    }
+    
+    /**
+     * Valida una suscripción antes de crearla o modificarla
+     */
+    public void validarSuscripcion(String rutCliente, String codigoPlan) throws SuscripcionInvalidaException {
+        Cliente cliente = clienteRepository.findByRut(rutCliente);
+        if (cliente == null) {
+            throw new SuscripcionInvalidaException(
+                "Cliente no encontrado para crear suscripción", 
+                "CLIENTE_NO_ENCONTRADO", 
+                rutCliente, 
+                codigoPlan
+            );
+        }
+        
+        PlanSector plan = planRepository.findByCodigo(codigoPlan);
+        if (plan == null) {
+            throw new SuscripcionInvalidaException(
+                "Plan no encontrado para crear suscripción", 
+                "PLAN_NO_ENCONTRADO", 
+                rutCliente, 
+                codigoPlan
+            );
+        }
+        
+        // Verificar si ya tiene una suscripción activa
+        if (cliente.getSuscripcion() != null && 
+            "ACTIVA".equals(cliente.getSuscripcion().getEstado())) {
+            throw new SuscripcionInvalidaException(
+                "Cliente ya tiene una suscripción activa", 
+                "SUSCRIPCION_DUPLICADA", 
+                rutCliente, 
+                codigoPlan
+            );
+        }
     }
 }

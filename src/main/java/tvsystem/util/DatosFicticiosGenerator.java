@@ -2,6 +2,8 @@ package tvsystem.util;
 
 import tvsystem.service.*;
 import tvsystem.model.*;
+import tvsystem.exception.ClienteInvalidoException;
+import tvsystem.exception.SectorNoEncontradoException;
 import java.util.*;
 
 /**
@@ -57,17 +59,18 @@ public class DatosFicticiosGenerator {
             PlanSector planSeleccionado = planes.get(random.nextInt(planes.size()));
             
             // Agregar cliente al sector usando el servicio
-            boolean clienteAgregado = clienteService.agregarCliente(
-                sectorSeleccionado.getNombre(), 
-                nombre, 
-                rut, 
-                direccion, 
-                planSeleccionado.getCodigoPlan()
-            );
-            
-            if (clienteAgregado) {
-                // Para algunos clientes, modificar su estado de pago para crear variedad
-                Cliente clienteCreado = buscarClientePorRut(rut, sectorService);
+            try {
+                boolean clienteAgregado = clienteService.agregarCliente(
+                    sectorSeleccionado.getNombre(), 
+                    nombre, 
+                    rut, 
+                    direccion, 
+                    planSeleccionado.getCodigoPlan()
+                );
+                
+                if (clienteAgregado) {
+                    // Para algunos clientes, modificar su estado de pago para crear variedad
+                    Cliente clienteCreado = buscarClientePorRut(rut, sectorService);
                 if (clienteCreado != null && clienteCreado.getSuscripcion() != null) {
                     
                     // 30% de clientes próximos a vencer (no han pagado y quedan menos de 2 semanas)
@@ -95,6 +98,16 @@ public class DatosFicticiosGenerator {
                 }
                 
                 System.out.println("Cliente " + nombre + " agregado a " + sectorSeleccionado.getNombre() + " con plan " + planSeleccionado.getNombrePlan());
+                }
+            } catch (ClienteInvalidoException ex) {
+                System.err.println("Error al crear cliente ficticio " + nombre + ": " + ex.getMessage());
+                // Continúa con el siguiente cliente
+            } catch (SectorNoEncontradoException ex) {
+                System.err.println("Error de sector al crear cliente ficticio " + nombre + ": " + ex.getMessage());
+                // Continúa con el siguiente cliente
+            } catch (Exception ex) {
+                System.err.println("Error inesperado al crear cliente ficticio " + nombre + ": " + ex.getMessage());
+                // Continúa con el siguiente cliente
             }
         }
         

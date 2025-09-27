@@ -4,8 +4,14 @@ package tvsystem.view.gui;
 import tvsystem.service.*;
 import tvsystem.model.*;
 import tvsystem.util.CsvManager;
+import tvsystem.util.LoggerHelper;
+import tvsystem.util.FileDialogHelper;
+import tvsystem.util.SystemConfigurer;
+import tvsystem.config.AppConstants;
+import tvsystem.exception.ClienteInvalidoException;
+import tvsystem.exception.SectorNoEncontradoException;
+import tvsystem.exception.SuscripcionInvalidaException;
 import javax.swing.*;
-import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -13,6 +19,7 @@ import java.util.Map;
 
 /**
  * Ventana principal de la interfaz grafica del sistema.
+ * Refactorizada para enfocarse únicamente en la presentación.
  * 
  * @author Maximiliano Rodriguez
  * @author Elias Manriquez
@@ -22,36 +29,15 @@ public class MainWindow extends JFrame {
     private ClienteService clienteService;
     private PlanService planService;
     private CaptacionService captacionService;
+    private ReportService reportService; // Nuevo servicio
     
     // Componentes de la interfaz
     private JTabbedPane tabbedPane;
-    private JTree clientesTree;
     private JPanel chartPanel;
     private JPanel sectoresGridPanel;
     
-    // Array de colores para los gráficos - Ampliado para evitar repeticiones
-    private final Color[] coloresGraficos = {
-        new Color(33, 150, 243),   // Azul
-        new Color(76, 175, 80),    // Verde
-        new Color(255, 152, 0),    // Naranja
-        new Color(156, 39, 176),   // Púrpura
-        new Color(244, 67, 54),    // Rojo
-        new Color(0, 150, 136),    // Verde azulado
-        new Color(255, 193, 7),    // Amarillo
-        new Color(96, 125, 139),   // Azul gris
-        new Color(205, 220, 57),   // Lima
-        new Color(255, 87, 34),    // Naranja profundo
-        new Color(121, 85, 72),    // Marrón
-        new Color(63, 81, 181),    // Índigo
-        new Color(233, 30, 99),    // Rosa
-        new Color(0, 188, 212),    // Cian
-        new Color(139, 195, 74),   // Verde claro
-        new Color(255, 111, 97),   // Coral
-        new Color(126, 87, 194),   // Violeta
-        new Color(92, 107, 192),   // Azul lavanda
-        new Color(38, 166, 154),   // Turquesa
-        new Color(102, 187, 106)   // Verde menta
-    };
+    // Array de colores para los gráficos
+    private final Color[] coloresGraficos = AppConstants.COLORES_GRAFICOS;
     
     public MainWindow(SectorService sectorService, 
                      ClienteService clienteService,
@@ -61,9 +47,11 @@ public class MainWindow extends JFrame {
         this.clienteService = clienteService;
         this.planService = planService;
         this.captacionService = captacionService;
+        this.reportService = new ReportService(sectorService, clienteService, planService);
         
         initComponents();
         configurarCierreVentana();
+        LoggerHelper.success("Ventana principal inicializada correctamente");
     }
     
     // Configura el manejo del cierre de ventana para guardar datos
@@ -98,7 +86,7 @@ public class MainWindow extends JFrame {
                 if (opcion == JOptionPane.YES_OPTION) {
                     boolean guardado = CsvManager.guardarDatos(sectorService, clienteService, planService);
                     if (guardado) {
-                        System.out.println("Datos guardados correctamente antes de salir.");
+                        LoggerHelper.info("Datos guardados correctamente antes de salir.");
                     } else {
                         int confirmar = JOptionPane.showConfirmDialog(
                             this,
@@ -114,7 +102,7 @@ public class MainWindow extends JFrame {
                 }
             }
             
-            System.out.println("Cerrando Sistema de Gestión Televisiva...");
+            LoggerHelper.info("Cerrando Sistema de Gestión Televisiva...");
             dispose();
             System.exit(0);
             
@@ -197,17 +185,17 @@ public class MainWindow extends JFrame {
         
         // Botón Reporte
         JButton btnReporte = new JButton("Reporte");
-        btnReporte.setBackground(new Color(33, 150, 243));
-        btnReporte.setForeground(Color.WHITE);
+        SystemConfigurer.configurarBotonConColor(btnReporte, AppConstants.COLOR_BOTON_REPORTE, AppConstants.COLOR_TEXTO_BLANCO);
         btnReporte.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+        btnReporte.setPreferredSize(new Dimension(AppConstants.BOTON_ANCHO_MEDIANO, AppConstants.BOTON_ALTO_MEDIANO));
         
         btnReporte.addActionListener(e -> generarReporteAnalisis());
         
         // Botón Guardar
         JButton btnGuardar = new JButton("Guardar");
-        btnGuardar.setBackground(new Color(76, 175, 80));
-        btnGuardar.setForeground(Color.WHITE);
+        SystemConfigurer.configurarBotonConColor(btnGuardar, AppConstants.COLOR_BOTON_GUARDAR, AppConstants.COLOR_TEXTO_BLANCO);
         btnGuardar.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+        btnGuardar.setPreferredSize(new Dimension(AppConstants.BOTON_ANCHO_MEDIANO, AppConstants.BOTON_ALTO_MEDIANO));
         
         btnGuardar.addActionListener(e -> {
             if (CsvManager.tieneArchivoSeleccionado()) {
@@ -445,7 +433,7 @@ public class MainWindow extends JFrame {
      */
     private void actualizarSectoresGrid(int umbralCritico) {
         if (sectoresGridPanel == null) {
-            System.out.println("sectoresGridPanel es null, no se puede actualizar aún");
+            LoggerHelper.warning("sectoresGridPanel es null, no se puede actualizar aún");
             return;
         }
         
@@ -594,9 +582,8 @@ public class MainWindow extends JFrame {
         // Botón principal - Agregar Cliente
         JButton btnAgregarCliente = new JButton("➕ Agregar Cliente");
         btnAgregarCliente.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
-        btnAgregarCliente.setBackground(new Color(76, 175, 80));
-        btnAgregarCliente.setForeground(Color.WHITE);
-        btnAgregarCliente.setPreferredSize(new Dimension(180, 40));
+        SystemConfigurer.configurarBotonConColor(btnAgregarCliente, AppConstants.COLOR_BOTON_GUARDAR, AppConstants.COLOR_TEXTO_BLANCO);
+        btnAgregarCliente.setPreferredSize(new Dimension(AppConstants.BOTON_ANCHO_GRANDE, AppConstants.BOTON_ALTO_MEDIANO));
         
         // ComboBox filtrar por
         JLabel lblFiltrar = new JLabel("Filtrar por:");
@@ -947,49 +934,6 @@ public class MainWindow extends JFrame {
         }
     }
     
-    /**
-     * Crea/actualiza el árbol de clientes
-     */
-    private void crearArbolClientes() {
-        // Crear modelo de árbol para agrupar por sectores
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Clientes");
-        
-        // Agrupar clientes por sector
-        List<Sector> sectores = sectorService.obtenerTodosLosSectores();
-        for (Sector sector : sectores) {
-            DefaultMutableTreeNode sectorNode = new DefaultMutableTreeNode(
-                sector.getNombre() + " (" + sector.contarClientes() + " clientes)");
-            
-            List<Cliente> clientes = sector.getClientes();
-            for (Cliente cliente : clientes) {
-                String clienteInfo = String.format("%s - %s (%s)", 
-                    cliente.getNombre(), 
-                    cliente.getRut(),
-                    cliente.getSuscripcion() != null ? 
-                        cliente.getSuscripcion().getPlan().getNombrePlan() : "Sin plan");
-                
-                DefaultMutableTreeNode clienteNode = new DefaultMutableTreeNode(clienteInfo);
-                clienteNode.setUserObject(cliente); // Guardar referencia al cliente
-                sectorNode.add(clienteNode);
-            }
-            
-            root.add(sectorNode);
-        }
-        
-        // Crear o actualizar el árbol
-        if (clientesTree == null) {
-            clientesTree = new JTree(root);
-            clientesTree.setShowsRootHandles(true);
-            clientesTree.setRootVisible(false);
-        } else {
-            clientesTree.setModel(new DefaultTreeModel(root));
-        }
-        
-        // Expandir todos los sectores por defecto
-        for (int i = 0; i < clientesTree.getRowCount(); i++) {
-            clientesTree.expandRow(i);
-        }
-    }
     
     private void mostrarDialogoAgregarCliente() {
         JDialog dialog = new JDialog(this, "Agregar Nuevo Cliente", true);
@@ -1080,12 +1024,27 @@ public class MainWindow extends JFrame {
                     JOptionPane.showMessageDialog(dialog, "Cliente agregado exitosamente");
                     dialog.dispose();
                     actualizarTodasLasVistas();
-                    System.out.println("Cliente " + nombre + " agregado al sector " + sector);
+                    LoggerHelper.success("Cliente " + nombre + " agregado al sector " + sector);
                 } else {
                     JOptionPane.showMessageDialog(dialog, "Error al agregar cliente");
                 }
+            } catch (ClienteInvalidoException ex) {
+                String mensaje = "Error de validación del cliente:\n" + ex.getMessage();
+                if (ex.getCodigoError() != null) {
+                    mensaje += "\nCódigo de error: " + ex.getCodigoError();
+                }
+                JOptionPane.showMessageDialog(dialog, mensaje, "Error de Cliente", JOptionPane.ERROR_MESSAGE);
+                LoggerHelper.error("ClienteInvalidoException: " + ex.getMessage());
+            } catch (SectorNoEncontradoException ex) {
+                String mensaje = "Error de sector:\n" + ex.getMessage();
+                if (ex.getSectoresDisponibles() > 0) {
+                    mensaje += "\nSectores disponibles: " + ex.getSectoresDisponibles();
+                }
+                JOptionPane.showMessageDialog(dialog, mensaje, "Sector No Encontrado", JOptionPane.WARNING_MESSAGE);
+                LoggerHelper.error("SectorNoEncontradoException: " + ex.getMessage());
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(dialog, "Error: " + ex.getMessage());
+                JOptionPane.showMessageDialog(dialog, "Error inesperado: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                LoggerHelper.error("Error inesperado al agregar cliente", ex);
             }
         });
         
@@ -1134,12 +1093,12 @@ public class MainWindow extends JFrame {
     }
     
     private void mostrarEstadisticasIniciales() {
-        System.out.println("=== SISTEMA DE GESTIÓN TELEVISIVA ===");
-        System.out.println("Sistema inicializado correctamente.");
-        System.out.println("Total de sectores: " + sectorService.obtenerTodosLosSectores().size());
-        System.out.println("Total de clientes: " + clienteService.contarClientesTotales());
-        System.out.println("Total de planes: " + planService.obtenerTodosLosPlanes().size());
-        System.out.println("¡Bienvenido al sistema!");
+        LoggerHelper.info("=== SISTEMA DE GESTIÓN TELEVISIVA ===");
+        LoggerHelper.info("Sistema inicializado correctamente.");
+        LoggerHelper.info("Total de sectores: " + sectorService.obtenerTodosLosSectores().size());
+        LoggerHelper.info("Total de clientes: " + clienteService.contarClientesTotales());
+        LoggerHelper.info("Total de planes: " + planService.obtenerTodosLosPlanes().size());
+        LoggerHelper.success("¡Bienvenido al sistema!");
     }
     
     /**
@@ -1147,25 +1106,22 @@ public class MainWindow extends JFrame {
      */
     public void actualizarTodasLasVistas() {
         SwingUtilities.invokeLater(() -> {
-            // 1. Actualizar árbol de clientes
-            crearArbolClientes();
-            
-            // 2. Actualizar grid de sectores
+            // 1. Actualizar grid de sectores
             actualizarSectoresGrid();
             
-            // 3. Actualizar panel de estadísticas (recrear el panel)
+            // 2. Actualizar panel de estadísticas (recrear el panel)
             JPanel sectoresPanel = createSectoresPanel();
             tabbedPane.setComponentAt(0, sectoresPanel);
             
-            // 4. Actualizar panel de clientes (recrear el panel)
+            // 3. Actualizar panel de clientes (recrear el panel)
             JPanel clientesPanel = createClientesPanel();
             tabbedPane.setComponentAt(1, clientesPanel);
             
-            // 5. Revalidar y repintar todo
+            // 4. Revalidar y repintar todo
             tabbedPane.revalidate();
             tabbedPane.repaint();
             
-            System.out.println("🔄 Vistas actualizadas correctamente");
+            LoggerHelper.success("🔄 Vistas actualizadas correctamente");
         });
     }
     
@@ -1441,9 +1397,8 @@ public class MainWindow extends JFrame {
         // Actualizar específicamente la tabla de clientes activa
         actualizarTablaClientesActiva();
         
-        // También actualizar árbol y sectores
+        // También actualizar grid de sectores
         SwingUtilities.invokeLater(() -> {
-            crearArbolClientes();
             actualizarSectoresGrid();
             
             // Revalidar solo lo necesario
@@ -1453,7 +1408,7 @@ public class MainWindow extends JFrame {
             }
         });
         
-        System.out.println("🔄 Interfaz actualizada desde diálogo");
+        LoggerHelper.debug("🔄 Interfaz actualizada desde diálogo");
     }
     
     /**
@@ -1466,9 +1421,9 @@ public class MainWindow extends JFrame {
         
         if (tableModel != null) {
             actualizarTablaClientes(tableModel);
-            System.out.println("📊 Tabla de clientes actualizada directamente");
+            LoggerHelper.success("📊 Tabla de clientes actualizada directamente");
         } else {
-            System.out.println("⚠️ No se encontró la tabla de clientes para actualizar");
+            LoggerHelper.warning("⚠️ No se encontró la tabla de clientes para actualizar");
         }
     }
     
@@ -1641,305 +1596,27 @@ public class MainWindow extends JFrame {
      * Genera y exporta un reporte completo de análisis de sectores en formato TXT
      */
     private void generarReporteAnalisis() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Guardar Reporte de Análisis");
-        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Archivos TXT (*.txt)", "txt"));
-        fileChooser.setSelectedFile(new java.io.File("reporte_analisis_sectores.txt"));
+        String rutaArchivo = FileDialogHelper.seleccionarUbicacionReporte(AppConstants.NOMBRE_REPORTE_DEFAULT);
         
-        int resultado = fileChooser.showSaveDialog(this);
-        if (resultado == JFileChooser.APPROVE_OPTION) {
-            java.io.File archivo = fileChooser.getSelectedFile();
-            String rutaArchivo = archivo.getAbsolutePath();
-            if (!rutaArchivo.endsWith(".txt")) {
-                rutaArchivo += ".txt";
-            }
-            
+        if (rutaArchivo != null) {
             try (java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.FileWriter(rutaArchivo))) {
-                escribirReporteCompleto(writer);
+                // Delegar generación al servicio especializado
+                reportService.generarReporteCompleto(writer);
                 
-                JOptionPane.showMessageDialog(this, 
-                    "Reporte generado exitosamente en:\n" + rutaArchivo, 
-                    "Reporte Exportado", 
-                    JOptionPane.INFORMATION_MESSAGE);
+                FileDialogHelper.mostrarInformacion(
+                    AppConstants.MSG_REPORTE_GENERADO + "\\n" + rutaArchivo, 
+                    AppConstants.TITULO_REPORTE);
+                    
+                LoggerHelper.success("Reporte generado en: " + rutaArchivo);
                     
             } catch (java.io.IOException e) {
-                JOptionPane.showMessageDialog(this, 
-                    "Error al generar el reporte:\n" + e.getMessage(), 
-                    "Error", 
-                    JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-    
-    /**
-     * Escribe el contenido completo del reporte de análisis
-     */
-    private void escribirReporteCompleto(java.io.PrintWriter writer) {
-        java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-        java.util.Date fechaActual = new java.util.Date();
-        
-        // Cabecera del reporte
-        writer.println("═════════════════════════════════════════════════════════════");
-        writer.println("           REPORTE DE ANÁLISIS DE SECTORES - TV SYSTEM");
-        writer.println("═════════════════════════════════════════════════════════════");
-        writer.println("Fecha de generación: " + dateFormat.format(fechaActual));
-        if (CsvManager.tieneArchivoSeleccionado()) {
-            writer.println("Archivo de datos: " + new java.io.File(CsvManager.getArchivoActual()).getName());
-        }
-        writer.println("═════════════════════════════════════════════════════════════");
-        writer.println();
-        
-        // Resumen ejecutivo
-        escribirResumenEjecutivo(writer);
-        
-        // Análisis detallado por sector
-        escribirAnalisisDetallado(writer);
-        
-        // Análisis de planes y ofertas
-        escribirAnalisisPlanes(writer);
-        
-        // Recomendaciones estratégicas
-        escribirRecomendaciones(writer);
-        
-        writer.println();
-        writer.println("═════════════════════════════════════════════════════════════");
-        writer.println("                    FIN DEL REPORTE");
-        writer.println("═════════════════════════════════════════════════════════════");
-    }
-    
-    /**
-     * Escribe el resumen ejecutivo del reporte
-     */
-    private void escribirResumenEjecutivo(java.io.PrintWriter writer) {
-        writer.println("📊 RESUMEN EJECUTIVO");
-        writer.println("─────────────────────────────────────────────────────────────");
-        
-        java.util.List<Sector> sectores = sectorService.obtenerTodosLosSectores();
-        int totalClientes = clienteService.contarClientesTotales();
-        int totalSectores = sectores.size();
-        java.util.List<PlanSector> planesConOferta = planService.obtenerPlanesConOferta();
-        
-        writer.println("• Total de sectores activos: " + totalSectores);
-        writer.println("• Total de clientes registrados: " + totalClientes);
-        writer.println("• Promedio de clientes por sector: " + (totalSectores > 0 ? (totalClientes / totalSectores) : 0));
-        writer.println("• Planes con ofertas activas: " + planesConOferta.size());
-        
-        // Identificar sector más y menos poblado
-        if (!sectores.isEmpty()) {
-            Sector sectorMayor = sectores.get(0);
-            Sector sectorMenor = sectores.get(0);
-            
-            for (Sector sector : sectores) {
-                int clientesSector = sector.contarClientes();
-                if (clientesSector > sectorMayor.contarClientes()) {
-                    sectorMayor = sector;
-                }
-                if (clientesSector < sectorMenor.contarClientes()) {
-                    sectorMenor = sector;
-                }
-            }
-            
-            writer.println("• Sector con mayor penetración: " + sectorMayor.getNombre() + " (" + sectorMayor.contarClientes() + " clientes)");
-            writer.println("• Sector con menor penetración: " + sectorMenor.getNombre() + " (" + sectorMenor.contarClientes() + " clientes)");
-        }
-        
-        writer.println();
-    }
-    
-    /**
-     * Escribe el análisis detallado por sector
-     */
-    private void escribirAnalisisDetallado(java.io.PrintWriter writer) {
-        writer.println("🏘️ ANÁLISIS DETALLADO POR SECTOR");
-        writer.println("─────────────────────────────────────────────────────────────");
-        
-        java.util.List<Sector> sectores = sectorService.obtenerTodosLosSectores();
-        sectores.sort((a, b) -> Integer.compare(b.contarClientes(), a.contarClientes())); // Ordenar por número de clientes descendente
-        
-        for (Sector sector : sectores) {
-            writer.println();
-            writer.println("🌍 SECTOR: " + sector.getNombre());
-            writer.println("   ├── Clientes activos: " + sector.contarClientes());
-            
-            // Análisis de planes en el sector
-            java.util.List<PlanSector> planesSector = planService.obtenerPlanesPorSector(sector.getNombre());
-            writer.println("   ├── Planes disponibles: " + planesSector.size());
-            
-            if (!planesSector.isEmpty()) {
-                long ingresoTotal = 0;
-                int planesConDescuento = 0;
-                
-                for (PlanSector plan : planesSector) {
-                    // Contar clientes con este plan
-                    java.util.List<Cliente> clientesConPlan = clienteService.obtenerClientesPorPlan(plan.getCodigoPlan());
-                    long ingresos = plan.calcularPrecioFinal() * clientesConPlan.size();
-                    ingresoTotal += ingresos;
-                    
-                    if (plan.getOfertaActiva()) {
-                        planesConDescuento++;
-                    }
-                    
-                    writer.printf("   │   ├── %s: %d clientes, $%,d c/u → $%,d total%n", 
-                        plan.getNombrePlan(), 
-                        clientesConPlan.size(),
-                        plan.calcularPrecioFinal(),
-                        ingresos);
-                        
-                    if (plan.getOfertaActiva()) {
-                        writer.printf("   │   │   └── 🏷️ OFERTA: %.0f%% descuento (Precio original: $%,d)%n",
-                            plan.getDescuento() * 100,
-                            plan.getPrecioMensual());
-                    }
-                }
-                
-                writer.printf("   ├── Ingresos estimados del sector: $%,d/mes%n", ingresoTotal);
-                writer.println("   ├── Planes con ofertas activas: " + planesConDescuento + "/" + planesSector.size());
-                
-                // Estado del sector
-                int clientesSector = sector.contarClientes();
-                String estadoSector;
-                if (clientesSector >= 100) {
-                    estadoSector = "🟢 EXCELENTE - Sector consolidado";
-                } else if (clientesSector >= 50) {
-                    estadoSector = "🟡 BUENO - Crecimiento estable";
-                } else if (clientesSector >= 25) {
-                    estadoSector = "🟠 MODERADO - Requiere atención";
-                } else {
-                    estadoSector = "🔴 CRÍTICO - Necesita intervención urgente";
-                }
-                writer.println("   └── Estado: " + estadoSector);
-            }
-        }
-        
-        writer.println();
-    }
-    
-    /**
-     * Escribe el análisis de planes y ofertas
-     */
-    private void escribirAnalisisPlanes(java.io.PrintWriter writer) {
-        writer.println("📋 ANÁLISIS DE PLANES Y OFERTAS");
-        writer.println("─────────────────────────────────────────────────────────────");
-        
-        java.util.List<PlanSector> todosLosPlanes = planService.obtenerTodosLosPlanes();
-        java.util.List<PlanSector> planesConOferta = planService.obtenerPlanesConOferta();
-        
-        // Estadísticas generales de ofertas
-        writer.println("📊 Estadísticas de Ofertas:");
-        writer.println("   ├── Total de planes: " + todosLosPlanes.size());
-        writer.println("   ├── Planes con ofertas: " + planesConOferta.size());
-        writer.printf("   └── Porcentaje de penetración de ofertas: %.1f%%%n", 
-            todosLosPlanes.size() > 0 ? (planesConOferta.size() * 100.0 / todosLosPlanes.size()) : 0);
-        
-        writer.println();
-        
-        // Análisis de ofertas por tipo de descuento
-        if (!planesConOferta.isEmpty()) {
-            writer.println("🏷️ Ofertas Activas por Categoría:");
-            
-            java.util.Map<String, java.util.List<PlanSector>> ofertasPorCategoria = new java.util.HashMap<>();
-            
-            for (PlanSector plan : planesConOferta) {
-                double descuento = plan.getDescuento();
-                String categoria;
-                if (descuento >= 0.25) {
-                    categoria = "Alto descuento (25%+)";
-                } else if (descuento >= 0.15) {
-                    categoria = "Descuento moderado (15-24%)";
-                } else {
-                    categoria = "Descuento básico (1-14%)";
-                }
-                
-                ofertasPorCategoria.computeIfAbsent(categoria, k -> new java.util.ArrayList<>()).add(plan);
-            }
-            
-            for (java.util.Map.Entry<String, java.util.List<PlanSector>> entry : ofertasPorCategoria.entrySet()) {
-                writer.println("   ├── " + entry.getKey() + ": " + entry.getValue().size() + " planes");
-                for (PlanSector plan : entry.getValue()) {
-                    java.util.List<Cliente> clientes = clienteService.obtenerClientesPorPlan(plan.getCodigoPlan());
-                    long ahorroTotal = (plan.getPrecioMensual() - plan.calcularPrecioFinal()) * clientes.size();
-                    writer.printf("   │   └── %s: %.0f%% desc., %d clientes, $%,d ahorro total/mes%n",
-                        plan.getCodigoPlan(),
-                        plan.getDescuento() * 100,
-                        clientes.size(),
-                        ahorroTotal);
-                }
-            }
-        }
-        
-        writer.println();
-    }
-    
-    /**
-     * Escribe las recomendaciones estratégicas
-     */
-    private void escribirRecomendaciones(java.io.PrintWriter writer) {
-        writer.println("💡 RECOMENDACIONES ESTRATÉGICAS");
-        writer.println("─────────────────────────────────────────────────────────────");
-        
-        java.util.List<Sector> sectores = sectorService.obtenerTodosLosSectores();
-        java.util.List<Sector> sectoresCriticos = new java.util.ArrayList<>();
-        java.util.List<Sector> sectoresExcelentes = new java.util.ArrayList<>();
-        
-        // Clasificar sectores
-        for (Sector sector : sectores) {
-            int clientes = sector.contarClientes();
-            if (clientes < 25) {
-                sectoresCriticos.add(sector);
-            } else if (clientes >= 100) {
-                sectoresExcelentes.add(sector);
-            }
-        }
-        
-        writer.println("📈 Recomendaciones de Crecimiento:");
-        if (!sectoresCriticos.isEmpty()) {
-            writer.println("   ├── ALTA PRIORIDAD - Sectores críticos (" + sectoresCriticos.size() + "):");
-            for (Sector sector : sectoresCriticos) {
-                writer.println("   │   └── " + sector.getNombre() + " (" + sector.contarClientes() + " clientes)");
-                writer.println("   │       → Implementar campaña de captación intensiva");
-                writer.println("   │       → Considerar descuentos agresivos (20-30%)");
-                writer.println("   │       → Evaluar alianzas locales o promociones dirigidas");
-            }
-        }
-        
-        writer.println("   ├── OPTIMIZACIÓN - Sectores exitosos:");
-        if (!sectoresExcelentes.isEmpty()) {
-            for (Sector sector : sectoresExcelentes) {
-                writer.println("   │   └── " + sector.getNombre() + " (" + sector.contarClientes() + " clientes)");
-                writer.println("   │       → Mantener calidad de servicio");
-                writer.println("   │       → Considerar planes premium");
-                writer.println("   │       → Usar como modelo para otros sectores");
+                FileDialogHelper.mostrarError(
+                    AppConstants.MSG_ERROR_REPORTE + "\\n" + e.getMessage(), 
+                    AppConstants.TITULO_ERROR);
+                LoggerHelper.error("Error al generar reporte", e);
             }
         } else {
-            writer.println("   │   └── Ningún sector ha alcanzado el nivel de excelencia (100+ clientes)");
+            LoggerHelper.info("Generación de reporte cancelada");
         }
-        
-        // Recomendaciones de ofertas
-        java.util.List<PlanSector> planesConOferta = planService.obtenerPlanesConOferta();
-        java.util.List<PlanSector> todosLosPlanes = planService.obtenerTodosLosPlanes();
-        
-        writer.println("   └── OFERTAS Y PROMOCIONES:");
-        double porcentajeOfertas = todosLosPlanes.size() > 0 ? (planesConOferta.size() * 100.0 / todosLosPlanes.size()) : 0;
-        
-        if (porcentajeOfertas < 30) {
-            writer.println("       → Aumentar penetración de ofertas (actual: " + String.format("%.1f", porcentajeOfertas) + "%)");
-            writer.println("       → Implementar ofertas estacionales o por sectores específicos");
-        } else if (porcentajeOfertas > 70) {
-            writer.println("       → Evaluar sostenibilidad de ofertas (actual: " + String.format("%.1f", porcentajeOfertas) + "%)");
-            writer.println("       → Considerar segmentación más específica de descuentos");
-        } else {
-            writer.println("       → Nivel de ofertas adecuado (actual: " + String.format("%.1f", porcentajeOfertas) + "%)");
-            writer.println("       → Mantener estrategia actual y monitorear resultados");
-        }
-        
-        writer.println();
-        writer.println("🎯 Métricas Clave a Monitorear:");
-        writer.println("   ├── Crecimiento mensual de clientes por sector");
-        writer.println("   ├── Efectividad de ofertas y descuentos");
-        writer.println("   ├── Ingresos promedio por cliente (ARPU)");
-        writer.println("   ├── Tasa de retención de clientes");
-        writer.println("   └── Penetración de mercado por zona geográfica");
-        
-        writer.println();
     }
 }

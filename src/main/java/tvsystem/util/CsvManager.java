@@ -2,14 +2,12 @@ package tvsystem.util;
 
 import tvsystem.model.*;
 import tvsystem.service.*;
-import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.*;
 import java.util.*;
 
 /**
  * Gestor de archivos CSV para cargar y guardar datos del sistema.
- * Guarda información completa del cliente incluyendo estado de suscripción y precios.
+ * Refactorizado para separar lógica I/O de UI.
  * 
  * @author Elias Manriquez
  */
@@ -18,48 +16,15 @@ public class CsvManager {
     private static String archivoActual = null;
     
     /**
-     * Muestra un diálogo para seleccionar un archivo CSV existente o crear uno nuevo.
+     * Solicita al usuario seleccionar archivo CSV
+     * @return true si se seleccionó archivo, false si se canceló
      */
     public static boolean seleccionarArchivo() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Seleccionar archivo de datos del sistema");
-        fileChooser.setFileFilter(new FileNameExtensionFilter("Archivos CSV (*.csv)", "csv"));
-        
-        String[] opciones = {"Abrir archivo existente", "Crear archivo nuevo", "Cancelar"};
-        int opcion = JOptionPane.showOptionDialog(
-            null,
-            "¿Desea abrir un archivo existente o crear uno nuevo?",
-            "Gestión de Datos",
-            JOptionPane.YES_NO_CANCEL_OPTION,
-            JOptionPane.QUESTION_MESSAGE,
-            null,
-            opciones,
-            opciones[0]
-        );
-        
-        if (opcion == 2) return false; // Cancelar
-        
-        if (opcion == 0) { // Abrir existente
-            fileChooser.setDialogType(JFileChooser.OPEN_DIALOG);
-            int resultado = fileChooser.showOpenDialog(null);
-            if (resultado == JFileChooser.APPROVE_OPTION) {
-                archivoActual = fileChooser.getSelectedFile().getAbsolutePath();
-                return true;
-            }
-        } else { // Crear nuevo
-            fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
-            fileChooser.setSelectedFile(new File("datos_tv_system.csv"));
-            int resultado = fileChooser.showSaveDialog(null);
-            if (resultado == JFileChooser.APPROVE_OPTION) {
-                String ruta = fileChooser.getSelectedFile().getAbsolutePath();
-                if (!ruta.endsWith(".csv")) {
-                    ruta += ".csv";
-                }
-                archivoActual = ruta;
-                return true;
-            }
+        String rutaSeleccionada = FileDialogHelper.seleccionarArchivoCsv();
+        if (rutaSeleccionada != null) {
+            archivoActual = rutaSeleccionada;
+            return true;
         }
-        
         return false;
     }
     
@@ -71,8 +36,8 @@ public class CsvManager {
         
         File archivo = new File(archivoActual);
         if (!archivo.exists()) {
-            System.out.println("📁 Archivo nuevo: " + archivoActual);
-            System.out.println("🎯 Generando datos ficticios iniciales...");
+            LoggerHelper.info("📁 Archivo nuevo: " + archivoActual);
+            LoggerHelper.info("🎯 Generando datos ficticios iniciales...");
             
             // Generar datos ficticios para archivo nuevo
             DatosFicticiosGenerator.generarClientesFicticios(sectorService, clienteService, planService);
@@ -85,12 +50,12 @@ public class CsvManager {
             int clientesCargados = 0;
             Map<String, Double> descuentosPorPlan = new HashMap<>(); // Para evitar aplicar descuentos múltiples veces
             
-            System.out.println("📂 Cargando datos desde: " + archivoActual);
+            LoggerHelper.info("📂 Cargando datos desde: " + archivoActual);
             
             // Leer cabecera
             String cabecera = reader.readLine();
             if (cabecera == null) {
-                System.out.println("⚠ Archivo CSV vacío");
+                LoggerHelper.warning("⚠ Archivo CSV vacío");
                 return true;
             }
             
@@ -99,7 +64,7 @@ public class CsvManager {
             boolean formatoNuevo = cabecera.startsWith("SECTOR,");
             
             if (!formatoAntiguo && !formatoNuevo) {
-                System.out.println("⚠ Formato de CSV no reconocido");
+                LoggerHelper.warning("⚠ Formato de CSV no reconocido");
                 return true;
             }
             
@@ -108,6 +73,7 @@ public class CsvManager {
                 
                 try {
                     String sector, nombre, rut, domicilio, codigoPlan;
+                    String estadoSuscripcion = "ACTIVA"; // Estado por defecto
                     double descuentoPlan = 0.0;
                     boolean tieneDescuento = false;
                     
@@ -119,12 +85,17 @@ public class CsvManager {
                         domicilio = datos[4];
                         codigoPlan = datos[5];
                     } else if (formatoNuevo && datos.length >= 5) {
-                        // Formato nuevo: SECTOR,NOMBRE,RUT,DOMICILIO,PLAN,...
+                        // Formato nuevo: SECTOR,NOMBRE,RUT,DOMICILIO,PLAN,FECHA_INICIO,FECHA_TERMINO,ESTADO_SUSCRIPCION,PRECIO_BASE,DESCUENTO,PRECIO_FINAL
                         sector = datos[0];
                         nombre = datos[1];
                         rut = datos[2];
                         domicilio = datos[3];
                         codigoPlan = datos[4];
+                        
+                        // Leer estado de suscripción si existe (posición 7)
+                        if (datos.length >= 8) {
+                            estadoSuscripcion = datos[7].trim().isEmpty() ? "ACTIVA" : datos[7];
+                        }
                         
                         // Si tiene formato completo con descuento (11 campos), extraer el descuento
                         if (datos.length >= 11) {
@@ -146,6 +117,12 @@ public class CsvManager {
                     
                     boolean exitoso = clienteService.agregarCliente(sector, nombre, rut, domicilio, codigoPlan);
                     if (exitoso) {
+                        // Después de agregar el cliente, establecer el estado de suscripción
+                        Cliente clienteAgregado = clienteService.obtenerClientePorRut(rut);
+                        if (clienteAgregado != null && clienteAgregado.getSuscripcion() != null) {
+                            clienteAgregado.getSuscripcion().setEstado(estadoSuscripcion);
+                            LoggerHelper.debug("Estado restaurado para " + nombre + ": " + estadoSuscripcion);
+                        }
                         clientesCargados++;
                     }
                 } catch (Exception e) {
@@ -161,13 +138,13 @@ public class CsvManager {
                 PlanSector plan = planService.obtenerPlanPorCodigo(codigoPlan);
                 if (plan != null) {
                     plan.activarOferta(descuento);
-                    System.out.println("✅ Descuento " + (descuento * 100) + "% aplicado al plan: " + codigoPlan);
+                    LoggerHelper.success("✅ Descuento " + (descuento * 100) + "% aplicado al plan: " + codigoPlan);
                 }
             }
             
-            System.out.println("✅ Datos cargados: " + clientesCargados + " clientes");
+            LoggerHelper.success("✅ Datos cargados: " + clientesCargados + " clientes");
             if (!descuentosPorPlan.isEmpty()) {
-                System.out.println("🎯 Ofertas restauradas: " + descuentosPorPlan.size() + " planes con descuentos");
+                LoggerHelper.info("🎯 Ofertas restauradas: " + descuentosPorPlan.size() + " planes con descuentos");
             }
             return true;
             
@@ -213,7 +190,7 @@ public class CsvManager {
                 }
             }
             
-            System.out.println("💾 Guardado exitoso: " + clientes.size() + " clientes en " + archivoActual);
+            LoggerHelper.success("💾 Guardado exitoso: " + clientes.size() + " clientes en " + archivoActual);
             return true;
             
         } catch (IOException e) {

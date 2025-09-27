@@ -1,6 +1,8 @@
 package tvsystem.service;
 
 import tvsystem.model.*;
+import tvsystem.config.AppConstants;
+import tvsystem.util.LoggerHelper;
 import java.util.*;
 
 /**
@@ -13,13 +15,6 @@ public class CaptacionService {
     private PlanService planService;
     private ClienteService clienteService;
     
-    private static final int UMBRAL_SECTOR_DEBIL = 5;
-    
-    // Descuentos escalonados basados en la criticidad del sector
-    private static final double DESCUENTO_CRITICO = 0.30;    // 30% - Sectores muy críticos (0-33% del umbral)
-    private static final double DESCUENTO_ALTO = 0.20;       // 20% - Sectores críticos (34-66% del umbral)
-    private static final double DESCUENTO_MODERADO = 0.15;   // 15% - Sectores moderados (67-99% del umbral)
-    
     public CaptacionService(SectorService sectorService, 
                            PlanService planService,
                            ClienteService clienteService) {
@@ -29,7 +24,7 @@ public class CaptacionService {
     }
     
     public List<Sector> identificarSectoresParaCaptacion() {
-        return sectorService.identificarSectoresDebiles(UMBRAL_SECTOR_DEBIL);
+        return sectorService.identificarSectoresDebiles(AppConstants.THRESHOLDS.UMBRAL_SECTOR_DEBIL);
     }
     
     /**
@@ -50,16 +45,16 @@ public class CaptacionService {
         double porcentajeDelUmbral = (double) clientesSector / umbral;
         
         if (porcentajeDelUmbral <= 0.33) {
-            return DESCUENTO_CRITICO;      // 30% - Muy crítico
+            return AppConstants.DISCOUNTS.DESCUENTO_CRITICO;      // 30% - Muy crítico
         } else if (porcentajeDelUmbral <= 0.66) {
-            return DESCUENTO_ALTO;         // 20% - Crítico
+            return AppConstants.DISCOUNTS.DESCUENTO_ALTO;         // 20% - Crítico
         } else {
-            return DESCUENTO_MODERADO;     // 15% - Moderado
+            return AppConstants.DISCOUNTS.DESCUENTO_MODERADO;     // 15% - Moderado
         }
     }
     
     public void ejecutarCampanaCaptacion() {
-        ejecutarCampanaCaptacionConUmbral(UMBRAL_SECTOR_DEBIL);
+        ejecutarCampanaCaptacionConUmbral(AppConstants.THRESHOLDS.UMBRAL_SECTOR_DEBIL);
     }
     
     /**
@@ -68,32 +63,32 @@ public class CaptacionService {
     public void ejecutarCampanaCaptacionConUmbral(int umbral) {
         List<Sector> sectoresDebiles = identificarSectoresParaCaptacion(umbral);
         
-        System.out.println("=== CAMPAÑA DE CAPTACIÓN AUTOMÁTICA ===");
-        System.out.println("Umbral utilizado: " + umbral);
-        System.out.println("Sectores identificados para captación: " + sectoresDebiles.size());
+        LoggerHelper.info("=== CAMPAÑA DE CAPTACIÓN AUTOMÁTICA ===");
+        LoggerHelper.info("Umbral utilizado: " + umbral);
+        LoggerHelper.info("Sectores identificados para captación: " + sectoresDebiles.size());
         
         for (Sector sector : sectoresDebiles) {
             activarOfertaCaptacionConUmbral(sector, umbral);
         }
         
         if (sectoresDebiles.isEmpty()) {
-            System.out.println("No se encontraron sectores que requieran captación.");
+            LoggerHelper.info("No se encontraron sectores que requieran captación.");
         }
     }
     
     private void activarOfertaCaptacion(Sector sector) {
-        System.out.println("\n--- Activando oferta en sector: " + sector.getNombre() + " ---");
-        System.out.println("Clientes actuales: " + sector.contarClientes());
+        LoggerHelper.info("\n--- Activando oferta en sector: " + sector.getNombre() + " ---");
+        LoggerHelper.info("Clientes actuales: " + sector.contarClientes());
         
         // Activar descuento en todos los planes del sector con descuento fijo del 15%
-        planService.activarOfertaPorSector(sector.getNombre(), DESCUENTO_MODERADO);
+        planService.activarOfertaPorSector(sector.getNombre(), AppConstants.DISCOUNTS.DESCUENTO_MODERADO);
         
-        System.out.println("✓ Oferta del " + (DESCUENTO_MODERADO * 100) + "% activada en todos los planes");
+        LoggerHelper.info("✓ Oferta del " + (AppConstants.DISCOUNTS.DESCUENTO_MODERADO * 100) + "% activada en todos los planes");
         
         // Mostrar planes con ofertas activas
         List<PlanSector> planes = planService.obtenerPlanesPorSector(sector.getNombre());
         for (PlanSector plan : planes) {
-            System.out.println("  - " + plan.getNombrePlan() + 
+            LoggerHelper.info("  - " + plan.getNombrePlan() + 
                              ": $" + plan.getPrecioMensual() + 
                              " → $" + plan.calcularPrecioFinal() + 
                              " (Oferta activa)");
@@ -107,20 +102,20 @@ public class CaptacionService {
         int clientesActuales = sector.contarClientes();
         double descuentoCalculado = calcularDescuentoPorUmbral(clientesActuales, umbral);
         
-        System.out.println("\n--- Activando oferta escalonada en sector: " + sector.getNombre() + " ---");
-        System.out.println("Clientes actuales: " + clientesActuales + " / Umbral: " + umbral);
-        System.out.printf("Porcentaje del umbral: %.1f%% → Descuento: %.0f%%\n", 
-                         (double) clientesActuales / umbral * 100, descuentoCalculado * 100);
+        LoggerHelper.info("\n--- Activando oferta escalonada en sector: " + sector.getNombre() + " ---");
+        LoggerHelper.info("Clientes actuales: " + clientesActuales + " / Umbral: " + umbral);
+        LoggerHelper.info(String.format("Porcentaje del umbral: %.1f%% → Descuento: %.0f%%", 
+                         (double) clientesActuales / umbral * 100, descuentoCalculado * 100));
         
         // Activar descuento calculado en todos los planes del sector
         planService.activarOfertaPorSector(sector.getNombre(), descuentoCalculado);
         
-        System.out.println("✓ Oferta del " + (descuentoCalculado * 100) + "% activada en todos los planes");
+        LoggerHelper.success("✓ Oferta del " + (descuentoCalculado * 100) + "% activada en todos los planes");
         
         // Mostrar planes con ofertas activas
         List<PlanSector> planes = planService.obtenerPlanesPorSector(sector.getNombre());
         for (PlanSector plan : planes) {
-            System.out.println("  - " + plan.getNombrePlan() + 
+            LoggerHelper.info("  - " + plan.getNombrePlan() + 
                              ": $" + plan.getPrecioMensual() + 
                              " → $" + plan.calcularPrecioFinal() + 
                              " (Descuento " + (descuentoCalculado * 100) + "%)");
@@ -130,11 +125,11 @@ public class CaptacionService {
     public void desactivarOfertasCaptacion() {
         List<Sector> todosLosSectores = sectorService.obtenerTodosLosSectores();
         
-        System.out.println("=== DESACTIVANDO OFERTAS DE CAPTACIÓN ===");
+        LoggerHelper.info("=== DESACTIVANDO OFERTAS DE CAPTACIÓN ===");
         
         for (Sector sector : todosLosSectores) {
             planService.desactivarOfertaPorSector(sector.getNombre());
-            System.out.println("✓ Ofertas desactivadas en sector: " + sector.getNombre());
+            LoggerHelper.success("✓ Ofertas desactivadas en sector: " + sector.getNombre());
         }
     }
     
@@ -168,37 +163,37 @@ public class CaptacionService {
     public void mostrarReporteCaptacion() {
         Map<String, Object> reporte = generarReporteCaptacion();
         
-        System.out.println("\n=== REPORTE DE CAPTACIÓN ===");
-        System.out.println("Sectores débiles identificados: " + reporte.get("cantidadSectoresDebiles"));
-        System.out.println("Planes con ofertas activas: " + reporte.get("cantidadPlanesConOferta"));
-        System.out.println("Potencial de captación estimado: " + reporte.get("potencialCaptacion") + " nuevos clientes");
+        LoggerHelper.info("\n=== REPORTE DE CAPTACIÓN ===");
+        LoggerHelper.info("Sectores débiles identificados: " + reporte.get("cantidadSectoresDebiles"));
+        LoggerHelper.info("Planes con ofertas activas: " + reporte.get("cantidadPlanesConOferta"));
+        LoggerHelper.info("Potencial de captación estimado: " + reporte.get("potencialCaptacion") + " nuevos clientes");
         
         @SuppressWarnings("unchecked")
         List<Sector> sectoresPrioritarios = (List<Sector>) reporte.get("sectoresPrioritarios");
         if (!sectoresPrioritarios.isEmpty()) {
-            System.out.println("\nSectores prioritarios (≤1 cliente):");
+            LoggerHelper.info("\nSectores prioritarios (≤1 cliente):");
             for (Sector sector : sectoresPrioritarios) {
-                System.out.println("  - " + sector.getNombre() + " (" + sector.contarClientes() + " clientes)");
+                LoggerHelper.info("  - " + sector.getNombre() + " (" + sector.contarClientes() + " clientes)");
             }
         }
         
         // Mostrar penetración por sector
-        System.out.println("\nPenetración por sector:");
+        LoggerHelper.info("\nPenetración por sector:");
         Map<String, Integer> estadisticas = sectorService.obtenerEstadisticasPorSector();
         for (Map.Entry<String, Integer> entry : estadisticas.entrySet()) {
-            String estado = entry.getValue() < UMBRAL_SECTOR_DEBIL ? "DÉBIL" : "FUERTE";
-            System.out.println("  - " + entry.getKey() + ": " + entry.getValue() + " clientes [" + estado + "]");
+            String estado = entry.getValue() < AppConstants.THRESHOLDS.UMBRAL_SECTOR_DEBIL ? "DÉBIL" : "FUERTE";
+            LoggerHelper.info("  - " + entry.getKey() + ": " + entry.getValue() + " clientes [" + estado + "]");
         }
     }
     
     public boolean requiereCaptacion(String nombreSector) {
-        Sector sector = sectorService.obtenerSectorPorNombre(nombreSector);
-        return sector != null && sector.esSectorDebil(UMBRAL_SECTOR_DEBIL);
+        Sector sector = sectorService.buscarSectorPorNombre(nombreSector);
+        return sector != null && sector.esSectorDebil(AppConstants.THRESHOLDS.UMBRAL_SECTOR_DEBIL);
     }
     
     public void configurarUmbralCaptacion(int nuevoUmbral) {
         // En una implementación real, esto se guardaría en configuración
-        System.out.println("Umbral de captación configurado a: " + nuevoUmbral + " clientes");
+        LoggerHelper.info("Umbral de captación configurado a: " + nuevoUmbral + " clientes");
     }
     
     public boolean validarElegibilidadCliente(String rutCliente) {

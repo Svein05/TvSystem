@@ -2,6 +2,7 @@ package tvsystem.view.cli;
 
 import tvsystem.model.*;
 import tvsystem.service.*;
+import tvsystem.util.LoggerHelper;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;

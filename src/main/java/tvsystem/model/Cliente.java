@@ -80,4 +80,30 @@ public class Cliente {
         }
         return info;
     }
+    
+    // -- SOBREESCRITURA DE MÉTODOS --
+    
+    @Override
+    public String toString() {
+        return "Cliente{" +
+                "nombre='" + nombre + '\'' +
+                ", rut='" + rut + '\'' +
+                ", domicilio='" + domicilio + '\'' +
+                ", suscripcion=" + (suscripcion != null ? suscripcion.getEstado() : "Sin suscripción") +
+                '}';
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        
+        Cliente cliente = (Cliente) obj;
+        return rut != null ? rut.equals(cliente.rut) : cliente.rut == null;
+    }
+    
+    @Override
+    public int hashCode() {
+        return rut != null ? rut.hashCode() : 0;
+    }
 }
