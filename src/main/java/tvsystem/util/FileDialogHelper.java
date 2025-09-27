@@ -5,17 +5,13 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
 
 /**
- * Helper para manejo de diálogos de archivos.
- * Separa la lógica de UI de la gestión de archivos.
+ * Helper para manejo de dialogos de archivos.
  * 
  * @author Elias Manriquez
  */
 public class FileDialogHelper {
     
-    /**
-     * Muestra diálogo para seleccionar archivo CSV existente o crear uno nuevo
-     * @return Ruta del archivo seleccionado o null si se cancela
-     */
+    // Muestra dialogo para seleccionar archivo CSV existente o crear uno nuevo
     public static String seleccionarArchivoCsv() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Seleccionar archivo de datos del sistema");
@@ -33,20 +29,16 @@ public class FileDialogHelper {
             opciones[0]
         );
         
-        if (opcion == 2) return null; // Cancelar
+        if (opcion == 2) return null;
         
-        if (opcion == 0) { // Abrir existente
+        if (opcion == 0) {
             return mostrarDialogoAbrirArchivo(fileChooser);
-        } else { // Crear nuevo
+        } else {
             return mostrarDialogoGuardarArchivo(fileChooser);
         }
     }
     
-    /**
-     * Muestra diálogo para seleccionar ubicación donde guardar reporte TXT
-     * @param nombreDefault Nombre por defecto del archivo
-     * @return Ruta donde guardar el archivo o null si se cancela
-     */
+    // Muestra dialogo para seleccionar ubicación donde guardar reporte TXT
     public static String seleccionarUbicacionReporte(String nombreDefault) {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Guardar Reporte de Análisis");
@@ -65,24 +57,7 @@ public class FileDialogHelper {
         return null;
     }
     
-    /**
-     * Muestra mensaje de confirmación con opciones Sí/No
-     */
-    public static boolean mostrarConfirmacion(String mensaje, String titulo) {
-        int opcion = JOptionPane.showConfirmDialog(
-            null,
-            mensaje,
-            titulo,
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.QUESTION_MESSAGE
-        );
-        
-        return opcion == JOptionPane.YES_OPTION;
-    }
-    
-    /**
-     * Muestra mensaje informativo
-     */
+    // Muestra mensaje informativo
     public static void mostrarInformacion(String mensaje, String titulo) {
         JOptionPane.showMessageDialog(
             null, 
@@ -92,9 +67,7 @@ public class FileDialogHelper {
         );
     }
     
-    /**
-     * Muestra mensaje de error
-     */
+    // Muestra mensaje de error
     public static void mostrarError(String mensaje, String titulo) {
         JOptionPane.showMessageDialog(
             null, 
@@ -104,7 +77,7 @@ public class FileDialogHelper {
         );
     }
     
-    // --- MÉTODOS PRIVADOS ---
+    // --- METODOS PRIVADOS ---
     
     private static String mostrarDialogoAbrirArchivo(JFileChooser fileChooser) {
         fileChooser.setDialogType(JFileChooser.OPEN_DIALOG);

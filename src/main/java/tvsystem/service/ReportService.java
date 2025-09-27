@@ -6,8 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
- * Servicio especializado en la generación de reportes y análisis del sistema.
- * Extrae toda la lógica de análisis de datos de la capa de presentación.
+ * Servicio para la generación de reportes y analisis del sistema.
  * 
  * @author Elias Manriquez
  */
@@ -17,6 +16,7 @@ public class ReportService {
     private final ClienteService clienteService;
     private final PlanService planService;
     
+    // Costructor
     public ReportService(SectorService sectorService, 
                         ClienteService clienteService, 
                         PlanService planService) {
@@ -25,16 +25,14 @@ public class ReportService {
         this.planService = planService;
     }
     
-    /**
-     * Genera el contenido completo del reporte de análisis
-     */
+    // Genera el contenido completo del reporte de análisis
     public void generarReporteCompleto(PrintWriter writer) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
         Date fechaActual = new Date();
         
         // Cabecera del reporte
         writer.println("═════════════════════════════════════════════════════════════");
-        writer.println("           REPORTE DE ANÁLISIS DE SECTORES - TV SYSTEM");
+        writer.println("           REPORTE DE ANALISIS DE SECTORES - TV SYSTEM");
         writer.println("═════════════════════════════════════════════════════════════");
         writer.println("Fecha de generación: " + dateFormat.format(fechaActual));
         writer.println("═════════════════════════════════════════════════════════════");
@@ -52,11 +50,9 @@ public class ReportService {
         writer.println("═════════════════════════════════════════════════════════════");
     }
     
-    /**
-     * Genera el resumen ejecutivo con métricas clave
-     */
+    // Genera el resumen
     public void generarResumenEjecutivo(PrintWriter writer) {
-        writer.println("📊 RESUMEN EJECUTIVO");
+        writer.println("RESUMEN EJECUTIVO");
         writer.println("─────────────────────────────────────────────────────────────");
         
         List<Sector> sectores = sectorService.obtenerTodosLosSectores();
@@ -69,7 +65,7 @@ public class ReportService {
         writer.println("• Promedio de clientes por sector: " + (totalSectores > 0 ? (totalClientes / totalSectores) : 0));
         writer.println("• Planes con ofertas activas: " + planesConOferta.size());
         
-        // Identificar sector más y menos poblado
+        // Identificar sector mas y menos poblado
         if (!sectores.isEmpty()) {
             SectorMetrics metrics = analizarSectores(sectores);
             writer.println("• Sector con mayor penetración: " + metrics.sectorMayor.getNombre() + 
@@ -81,22 +77,20 @@ public class ReportService {
         writer.println();
     }
     
-    /**
-     * Genera análisis detallado por sector
-     */
+    // Genera analisis detallado por sector
     public void generarAnalisisDetallado(PrintWriter writer) {
-        writer.println("🏘️ ANÁLISIS DETALLADO POR SECTOR");
+        writer.println("ANÁLISIS DETALLADO POR SECTOR");
         writer.println("─────────────────────────────────────────────────────────────");
         
         List<Sector> sectores = sectorService.obtenerTodosLosSectores();
-        sectores.sort((a, b) -> Integer.compare(b.contarClientes(), a.contarClientes())); // Ordenar por clientes desc
+        sectores.sort((a, b) -> Integer.compare(b.contarClientes(), a.contarClientes()));
         
         for (Sector sector : sectores) {
             writer.println();
-            writer.println("🌍 SECTOR: " + sector.getNombre());
+            writer.println("SECTOR: " + sector.getNombre());
             writer.println("   ├── Clientes activos: " + sector.contarClientes());
             
-            // Análisis de planes en el sector
+            // Analisis de planes en el sector
             List<PlanSector> planesSector = planService.obtenerPlanesPorSector(sector.getNombre());
             writer.println("   ├── Planes disponibles: " + planesSector.size());
             
@@ -115,7 +109,7 @@ public class ReportService {
                         planMetric.ingresos);
                         
                     if (planMetric.tieneOferta) {
-                        writer.printf("   │   │   └── 🏷️ OFERTA: %.0f%% descuento (Precio original: $%,d)%n",
+                        writer.printf("   │   │   └── OFERTA: %.0f%% descuento (Precio original: $%,d)%n",
                             planMetric.descuento * 100,
                             planMetric.precioOriginal);
                     }
@@ -130,18 +124,16 @@ public class ReportService {
         writer.println();
     }
     
-    /**
-     * Genera análisis de planes y ofertas
-     */
+    // Genera analisis de planes y ofertas
     public void generarAnalisisPlanes(PrintWriter writer) {
-        writer.println("📋 ANÁLISIS DE PLANES Y OFERTAS");
+        writer.println("ANALISIS DE PLANES Y OFERTAS");
         writer.println("─────────────────────────────────────────────────────────────");
         
         List<PlanSector> todosLosPlanes = planService.obtenerTodosLosPlanes();
         List<PlanSector> planesConOferta = planService.obtenerPlanesConOferta();
         
-        // Estadísticas generales de ofertas
-        writer.println("📊 Estadísticas de Ofertas:");
+        // Estadisticas generales de ofertas
+        writer.println("Estadísticas de Ofertas:");
         writer.println("   ├── Total de planes: " + todosLosPlanes.size());
         writer.println("   ├── Planes con ofertas: " + planesConOferta.size());
         writer.printf("   └── Porcentaje de penetración de ofertas: %.1f%%%n", 
@@ -149,11 +141,11 @@ public class ReportService {
         
         writer.println();
         
-        // Análisis de ofertas por categoría
+        // Analisis de ofertas por categoría
         if (!planesConOferta.isEmpty()) {
             Map<String, List<PlanSector>> ofertasPorCategoria = categorizarOfertas(planesConOferta);
             
-            writer.println("🏷️ Ofertas Activas por Categoría:");
+            writer.println("Ofertas Activas por Categoría:");
             for (Map.Entry<String, List<PlanSector>> entry : ofertasPorCategoria.entrySet()) {
                 writer.println("   ├── " + entry.getKey() + ": " + entry.getValue().size() + " planes");
                 for (PlanSector plan : entry.getValue()) {
@@ -171,17 +163,15 @@ public class ReportService {
         writer.println();
     }
     
-    /**
-     * Genera recomendaciones estratégicas basadas en el análisis
-     */
+    // Genera recomendaciones
     public void generarRecomendaciones(PrintWriter writer) {
-        writer.println("💡 RECOMENDACIONES ESTRATÉGICAS");
+        writer.println("RECOMENDACIONES ESTRATÉGICAS");
         writer.println("─────────────────────────────────────────────────────────────");
         
         List<Sector> sectores = sectorService.obtenerTodosLosSectores();
         SectorClassification classification = clasificarSectores(sectores);
         
-        writer.println("📈 Recomendaciones de Crecimiento:");
+        writer.println("Recomendaciones de Crecimiento:");
         if (!classification.sectoresCriticos.isEmpty()) {
             writer.println("   ├── ALTA PRIORIDAD - Sectores críticos (" + classification.sectoresCriticos.size() + "):");
             for (Sector sector : classification.sectoresCriticos) {
@@ -208,7 +198,7 @@ public class ReportService {
         generateOfferRecommendations(writer);
         
         writer.println();
-        writer.println("🎯 Métricas Clave a Monitorear:");
+        writer.println("Métricas Clave a Monitorear:");
         writer.println("   ├── Crecimiento mensual de clientes por sector");
         writer.println("   ├── Efectividad de ofertas y descuentos");
         writer.println("   ├── Ingresos promedio por cliente (ARPU)");
@@ -218,7 +208,7 @@ public class ReportService {
         writer.println();
     }
     
-    // --- MÉTODOS DE APOYO PARA ANÁLISIS ---
+    // --- METODOS DE APOYO PARA ANALISIS ---
     
     private SectorMetrics analizarSectores(List<Sector> sectores) {
         Sector sectorMayor = sectores.get(0);
@@ -263,7 +253,7 @@ public class ReportService {
             
             detallesPlanes.add(new PlanMetrics(
                 plan.getNombrePlan(),
-                clientesActivos, // Usar clientesActivos en lugar de clientesConPlan.size()
+                clientesActivos,
                 plan.calcularPrecioFinal(),
                 plan.getPrecioMensual(),
                 ingresos,
@@ -277,13 +267,13 @@ public class ReportService {
     
     private String determinarEstadoSector(int clientesSector) {
         if (clientesSector >= 100) {
-            return "🟢 EXCELENTE - Sector consolidado";
+            return "EXCELENTE - Sector consolidado";
         } else if (clientesSector >= 50) {
-            return "🟡 BUENO - Crecimiento estable";
+            return "BUENO - Crecimiento estable";
         } else if (clientesSector >= 25) {
-            return "🟠 MODERADO - Requiere atención";
+            return "MODERADO - Requiere atención";
         } else {
-            return "🔴 CRÍTICO - Necesita intervención urgente";
+            return "CRÍTICO - Necesita intervención urgente";
         }
     }
     
@@ -346,7 +336,7 @@ public class ReportService {
         }
     }
     
-    // --- CLASES DE DATOS PARA MÉTRICAS ---
+    // --- CLASES DE DATOS PARA METRICAS ---
     
     private static class SectorMetrics {
         final Sector sectorMayor;

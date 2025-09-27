@@ -7,8 +7,8 @@ import java.util.*;
 
 /**
  * Gestor de archivos CSV para cargar y guardar datos del sistema.
- * Refactorizado para separar lógica I/O de UI.
  * 
+ * @author Maximiliano Rodriguez
  * @author Elias Manriquez
  */
 public class CsvManager {
@@ -17,7 +17,7 @@ public class CsvManager {
     
     /**
      * Solicita al usuario seleccionar archivo CSV
-     * @return true si se seleccionó archivo, false si se canceló
+     * @return true si se seleccionó archivo, false si se cancelo
      */
     public static boolean seleccionarArchivo() {
         String rutaSeleccionada = FileDialogHelper.seleccionarArchivoCsv();
@@ -28,16 +28,14 @@ public class CsvManager {
         return false;
     }
     
-    /**
-     * Carga los datos desde el archivo CSV seleccionado.
-     */
+    // Carga los datos desde el archivo CSV seleccionado.
     public static boolean cargarDatos(SectorService sectorService, ClienteService clienteService, PlanService planService) {
         if (archivoActual == null) return false;
         
         File archivo = new File(archivoActual);
         if (!archivo.exists()) {
-            LoggerHelper.info("📁 Archivo nuevo: " + archivoActual);
-            LoggerHelper.info("🎯 Generando datos ficticios iniciales...");
+            LoggerHelper.info("Archivo nuevo: " + archivoActual);
+            LoggerHelper.info("Generando datos ficticios iniciales...");
             
             // Generar datos ficticios para archivo nuevo
             DatosFicticiosGenerator.generarClientesFicticios(sectorService, clienteService, planService);
@@ -48,23 +46,14 @@ public class CsvManager {
         try (BufferedReader reader = new BufferedReader(new FileReader(archivo))) {
             String linea;
             int clientesCargados = 0;
-            Map<String, Double> descuentosPorPlan = new HashMap<>(); // Para evitar aplicar descuentos múltiples veces
+            Map<String, Double> descuentosPorPlan = new HashMap<>();
             
-            LoggerHelper.info("📂 Cargando datos desde: " + archivoActual);
+            LoggerHelper.info("Cargando datos desde: " + archivoActual);
             
             // Leer cabecera
             String cabecera = reader.readLine();
             if (cabecera == null) {
-                LoggerHelper.warning("⚠ Archivo CSV vacío");
-                return true;
-            }
-            
-            // Determinar formato (nuevo o antiguo)
-            boolean formatoAntiguo = cabecera.startsWith("TIPO,");
-            boolean formatoNuevo = cabecera.startsWith("SECTOR,");
-            
-            if (!formatoAntiguo && !formatoNuevo) {
-                LoggerHelper.warning("⚠ Formato de CSV no reconocido");
+                LoggerHelper.warning("Archivo CSV vacío");
                 return true;
             }
             
@@ -74,63 +63,84 @@ public class CsvManager {
                 try {
                     String sector, nombre, rut, domicilio, codigoPlan;
                     String estadoSuscripcion = "ACTIVA"; // Estado por defecto
+                    boolean pagado = true; // Por defecto pagado
+                    java.time.LocalDate proximoVencimiento = null;
                     double descuentoPlan = 0.0;
                     boolean tieneDescuento = false;
                     
-                    if (formatoAntiguo && datos.length >= 6 && "CLIENTE".equals(datos[0])) {
-                        // Formato antiguo: TIPO,SECTOR,NOMBRE,RUT,DOMICILIO,PLAN,...
-                        sector = datos[1];
-                        nombre = datos[2];
-                        rut = datos[3];
-                        domicilio = datos[4];
-                        codigoPlan = datos[5];
-                    } else if (formatoNuevo && datos.length >= 5) {
-                        // Formato nuevo: SECTOR,NOMBRE,RUT,DOMICILIO,PLAN,FECHA_INICIO,FECHA_TERMINO,ESTADO_SUSCRIPCION,PRECIO_BASE,DESCUENTO,PRECIO_FINAL
-                        sector = datos[0];
-                        nombre = datos[1];
-                        rut = datos[2];
-                        domicilio = datos[3];
-                        codigoPlan = datos[4];
+                    sector = datos[0];
+                    nombre = datos[1];
+                    rut = datos[2];
+                    domicilio = datos[3];
+                    codigoPlan = datos[4];
                         
-                        // Leer estado de suscripción si existe (posición 7)
-                        if (datos.length >= 8) {
-                            estadoSuscripcion = datos[7].trim().isEmpty() ? "ACTIVA" : datos[7];
-                        }
+                    // Leer estado de suscripcion si existe 
+                    if (datos.length >= 8) {
+                        estadoSuscripcion = datos[7].trim().isEmpty() ? "ACTIVA" : datos[7];
+                    }
                         
-                        // Si tiene formato completo con descuento (11 campos), extraer el descuento
-                        if (datos.length >= 11) {
-                            try {
-                                descuentoPlan = Double.parseDouble(datos[9]); // Campo DESCUENTO
-                                tieneDescuento = descuentoPlan > 0.0;
+                    if (datos.length >= 11) {
+                        try {
+                            descuentoPlan = Double.parseDouble(datos[9]); // Campo DESCUENTO
+                            tieneDescuento = descuentoPlan > 0.0;
                                 
-                                // Almacenar descuento por plan para aplicarlo una sola vez
-                                if (tieneDescuento && !descuentosPorPlan.containsKey(codigoPlan)) {
-                                    descuentosPorPlan.put(codigoPlan, descuentoPlan);
-                                }
-                            } catch (NumberFormatException e) {
-                                descuentoPlan = 0.0;
+                            // Almacenar descuento por plan para aplicarlo una sola vez
+                            if (tieneDescuento && !descuentosPorPlan.containsKey(codigoPlan)) {
+                                descuentosPorPlan.put(codigoPlan, descuentoPlan);
                             }
+                        } catch (NumberFormatException e) {
+                            descuentoPlan = 0.0;
                         }
-                    } else {
-                        continue; // Saltar líneas que no coinciden con ningún formato
                     }
                     
-                    boolean exitoso = clienteService.agregarCliente(sector, nombre, rut, domicilio, codigoPlan);
-                    if (exitoso) {
-                        // Después de agregar el cliente, establecer el estado de suscripción
-                        Cliente clienteAgregado = clienteService.obtenerClientePorRut(rut);
-                        if (clienteAgregado != null && clienteAgregado.getSuscripcion() != null) {
-                            clienteAgregado.getSuscripcion().setEstado(estadoSuscripcion);
-                            LoggerHelper.debug("Estado restaurado para " + nombre + ": " + estadoSuscripcion);
+                    // Leer campos adicionales si existen (formato extendido con 13 campos)
+                    if (datos.length >= 13) {
+                        // Campo PAGADO (posicion 11)
+                        String pagadoStr = datos[11].trim();
+                        pagado = "true".equalsIgnoreCase(pagadoStr);
+                        
+                        // Campo PROXIMO_VENCIMIENTO (posicion 12)
+                        String vencimientoStr = datos[12].trim();
+                        if (!vencimientoStr.isEmpty()) {
+                            try {
+                                proximoVencimiento = java.time.LocalDate.parse(vencimientoStr);
+                            } catch (Exception e) {
+                                // Si falla el parsing, usar valor por defecto
+                                proximoVencimiento = null;
+                            }
                         }
+                    }
+                    
+                    // Usar la sobrecarga para crear cliente con estado personalizado
+                    boolean exitoso;
+                    if (proximoVencimiento != null) {
+                        // Usar sobrecarga con estado personalizado
+                        exitoso = clienteService.agregarCliente(sector, nombre, rut, domicilio, codigoPlan,
+                                                              estadoSuscripcion, proximoVencimiento, pagado);
+                    } else {
+                        // Usar metodo original
+                        exitoso = clienteService.agregarCliente(sector, nombre, rut, domicilio, codigoPlan);
+                        // Si se creo exitoso, actualizar el estado manualmente
+                        if (exitoso) {
+                            Cliente clienteAgregado = clienteService.obtenerClientePorRut(rut);
+                            if (clienteAgregado != null && clienteAgregado.getSuscripcion() != null) {
+                                clienteAgregado.getSuscripcion().setEstado(estadoSuscripcion);
+                                clienteAgregado.getSuscripcion().setPagado(pagado);
+                            }
+                        }
+                    }
+                    
+                    if (exitoso) {
                         clientesCargados++;
+                        LoggerHelper.debug("Cliente cargado: " + nombre + " - Estado: " + estadoSuscripcion + 
+                                         " - Pagado: " + pagado + " - Vencimiento: " + proximoVencimiento);
                     }
                 } catch (Exception e) {
-                    System.err.println("❌ Error al cargar cliente: " + linea);
+                    System.err.println("Error al cargar cliente: " + linea);
                 }
             }
             
-            // Aplicar descuentos a los planes después de cargar todos los clientes
+            // Aplicar descuentos a los planes despues de cargar todos los clientes
             for (Map.Entry<String, Double> entry : descuentosPorPlan.entrySet()) {
                 String codigoPlan = entry.getKey();
                 Double descuento = entry.getValue();
@@ -138,35 +148,31 @@ public class CsvManager {
                 PlanSector plan = planService.obtenerPlanPorCodigo(codigoPlan);
                 if (plan != null) {
                     plan.activarOferta(descuento);
-                    LoggerHelper.success("✅ Descuento " + (descuento * 100) + "% aplicado al plan: " + codigoPlan);
+                    LoggerHelper.success("Descuento " + (descuento * 100) + "% aplicado al plan: " + codigoPlan);
                 }
             }
             
-            LoggerHelper.success("✅ Datos cargados: " + clientesCargados + " clientes");
+            LoggerHelper.success("Datos cargados: " + clientesCargados + " clientes");
             if (!descuentosPorPlan.isEmpty()) {
-                LoggerHelper.info("🎯 Ofertas restauradas: " + descuentosPorPlan.size() + " planes con descuentos");
+                LoggerHelper.info("Ofertas restauradas: " + descuentosPorPlan.size() + " planes con descuentos");
             }
             return true;
             
         } catch (IOException e) {
-            System.err.println("❌ Error al leer archivo CSV: " + e.getMessage());
+            System.err.println("Error al leer archivo CSV: " + e.getMessage());
             return false;
         }
     }
     
-    /**
-     * Guarda todos los datos actuales en el archivo CSV con información completa.
-     */
+    // Guarda todos los datos actuales en el archivo CSV
     public static boolean guardarDatos(SectorService sectorService, ClienteService clienteService, PlanService planService) {
         if (archivoActual == null) {
-            System.err.println("❌ No hay archivo seleccionado");
+            System.err.println("No hay archivo seleccionado");
             return false;
         }
         
         try (PrintWriter writer = new PrintWriter(new FileWriter(archivoActual))) {
-            
-            // Cabecera optimizada - eliminando campos redundantes
-            writer.println("SECTOR,NOMBRE,RUT,DOMICILIO,PLAN,FECHA_INICIO,FECHA_TERMINO,ESTADO_SUSCRIPCION,PRECIO_BASE,DESCUENTO,PRECIO_FINAL");
+            writer.println("SECTOR,NOMBRE,RUT,DOMICILIO,PLAN,FECHA_INICIO,FECHA_TERMINO,ESTADO_SUSCRIPCION,PRECIO_BASE,DESCUENTO,PRECIO_FINAL,PAGADO,PROXIMO_VENCIMIENTO");
             
             List<Cliente> clientes = clienteService.obtenerTodosLosClientes();
             for (Cliente cliente : clientes) {
@@ -174,7 +180,7 @@ public class CsvManager {
                     Suscripcion suscripcion = cliente.getSuscripcion();
                     PlanSector plan = suscripcion.getPlan();
                     
-                    writer.printf("%s,%s,%s,%s,%s,%s,%s,%s,%d,%.2f,%d%n",
+                    writer.printf("%s,%s,%s,%s,%s,%s,%s,%s,%d,%.2f,%d,%s,%s%n",
                         escapar(plan.getSectorAsociado()),
                         escapar(cliente.getNombre()),
                         escapar(cliente.getRut()),
@@ -185,16 +191,18 @@ public class CsvManager {
                         escapar(suscripcion.getEstado() != null ? suscripcion.getEstado() : "ACTIVA"),
                         plan.getPrecioMensual(),
                         plan.getDescuento(),
-                        plan.calcularPrecioFinal()
+                        plan.calcularPrecioFinal(),
+                        suscripcion.isPagado() ? "true" : "false",
+                        suscripcion.getProximoVencimiento() != null ? suscripcion.getProximoVencimiento() : ""
                     );
                 }
             }
             
-            LoggerHelper.success("💾 Guardado exitoso: " + clientes.size() + " clientes en " + archivoActual);
+            LoggerHelper.success("Guardado exitoso: " + clientes.size() + " clientes en " + archivoActual);
             return true;
             
         } catch (IOException e) {
-            System.err.println("❌ Error al guardar: " + e.getMessage());
+            System.err.println("Error al guardar: " + e.getMessage());
             return false;
         }
     }

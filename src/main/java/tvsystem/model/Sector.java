@@ -4,7 +4,7 @@ import java.util.*;
 
 /**
  * Representa un sector.
- * Cada sector tiene sus propios planes específicos y clientes.
+ * Cada sector tiene sus propios planes especificos y clientes.
  * 
  * @author Elias Manriquez
  * @author Maximiliano Rodriguez
@@ -14,12 +14,14 @@ public class Sector {
     private Map<String, Cliente> clientes;
     private Map<String, PlanSector> planesDisponibles;
     
+    // Constructor
     public Sector(){
         nombre = "";
         this.clientes = new HashMap<>();
         this.planesDisponibles = new HashMap<>();
     }
     
+    // Constructor Sobrecarga
     public Sector(String nombre){
         this.nombre = nombre;
         this.clientes = new HashMap<>();
@@ -80,7 +82,7 @@ public class Sector {
         return this.planesDisponibles.get(codigo);
     }
     
-    // Métodos de análisis
+    // Metodos de análisis
     public int contarClientes() {
         return clientes.size();
     }
@@ -96,26 +98,7 @@ public class Sector {
         return contador;
     }
     
-    public boolean esSectorDebil() {
-        return contarClientes() < 5;
-    }
-    
     public boolean esSectorDebil(int umbralMinimo) {
         return contarClientes() < umbralMinimo;
-    }
-    
-    public double calcularPenetracionMercado(int poblacionTotal) {
-        return (double) contarClientes() / poblacionTotal * 100;
-    }
-    
-    public List<Cliente> getClientesPorPlan(String codigoPlan) {
-        List<Cliente> clientesDelPlan = new ArrayList<>();
-        for (Cliente cliente : clientes.values()) {
-            if (cliente.getSuscripcion() != null && 
-                cliente.getSuscripcion().getPlan().getCodigoPlan().equals(codigoPlan)) {
-                clientesDelPlan.add(cliente);
-            }
-        }
-        return clientesDelPlan;
     }
 }

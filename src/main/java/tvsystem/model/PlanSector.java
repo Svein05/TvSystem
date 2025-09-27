@@ -1,8 +1,8 @@
 package tvsystem.model;
 
 /**
- * Plan de televisión específico para un sector.
- * Cada sector puede tener planes con precios y ofertas específicas.
+ * Plan de television específico para un sector.
+ * Cada sector puede tener planes con precios y ofertas especificas.
  * 
  * @author Maximiliano Rodriguez
  * @author Elias Manriquez
@@ -15,6 +15,7 @@ public class PlanSector {
     private String codigoPlan;
     private String sectorAsociado;
 
+    // Constructor
     public PlanSector(String codigoPlan, String nombrePlan, long precioMensual, boolean ofertaActiva, double descuento, String sectorAsociado) {
         this.codigoPlan = codigoPlan;
         this.nombrePlan = nombrePlan;

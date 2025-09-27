@@ -8,14 +8,15 @@ import java.awt.*;
 import java.util.List;
 
 /**
- * Diálogo para mostrar detalles completos de un sector
+ * Dialogo para mostrar detalles completos de un sector
  * 
+ * @author Maximiliano Rodriguez
  * @author Elias Manriquez
  */
 public class SectorDetailDialog extends JDialog {
     private final Sector sector;
     private final ClienteService clienteService;
-    private final MainWindow mainWindow; // Referencia al MainWindow
+    private final MainWindow mainWindow;
     
     public SectorDetailDialog(MainWindow parent, Sector sector, 
                              ClienteService clienteService, 
@@ -44,7 +45,7 @@ public class SectorDetailDialog extends JDialog {
         JPanel clientesPanel = createClientesPanel();
         tabbedPane.addTab("Clientes (" + sector.contarClientes() + ")", clientesPanel);
         
-        // Pestaña de estadísticas
+        // Pestaña de estadisticas
         JPanel estadisticasPanel = createEstadisticasPanel();
         tabbedPane.addTab("Estadísticas", estadisticasPanel);
         
@@ -152,11 +153,8 @@ public class SectorDetailDialog extends JDialog {
                 String rut = (String) model.getValueAt(selectedRow, 0);
                 Cliente cliente = clienteService.obtenerClientePorRut(rut);
                 if (cliente != null) {
-                    // Usar la misma función que en gestión de clientes
                     mainWindow.mostrarDialogoEditarCliente(cliente);
-                    // Actualizar tabla después de la edición
                     actualizarTablaClientes(model);
-                    // También actualizar vistas principales
                     mainWindow.actualizarTodasLasVistas();
                 }
             }
@@ -202,7 +200,7 @@ public class SectorDetailDialog extends JDialog {
         
         List<Cliente> clientes = sector.getClientes();
         
-        // Calcular estadísticas
+        // Calcular estadisticas
         int totalClientes = clientes.size();
         int clientesConSuscripcionActiva = 0;
         double ingresosTotales = 0.0;
@@ -210,28 +208,24 @@ public class SectorDetailDialog extends JDialog {
         for (Cliente cliente : clientes) {
             if (cliente.getSuscripcion() != null) {
                 String estado = cliente.getSuscripcion().getEstado();
-                // Solo contar como "con suscripción" las que están ACTIVAS
                 if ("ACTIVA".equalsIgnoreCase(estado)) {
                     clientesConSuscripcionActiva++;
                     ingresosTotales += cliente.getSuscripcion().getPlan().calcularPrecioFinal();
                 }
-                // Las CANCELADAS y SUSPENDIDAS se cuentan como "sin suscripción"
             }
         }
         
         int clientesSinSuscripcion = totalClientes - clientesConSuscripcionActiva;
         
-        // Crear paneles de estadísticas
+        // Crear paneles de estadisticas
         panel.add(createStatPanel("Total de Clientes", String.valueOf(totalClientes), new Color(33, 150, 243)));
         panel.add(createStatPanel("Con Suscripción Activa", String.valueOf(clientesConSuscripcionActiva), new Color(76, 175, 80)));
         panel.add(createStatPanel("Sin Suscripción Activa", String.valueOf(clientesSinSuscripcion), new Color(255, 152, 0)));
         panel.add(createStatPanel("Ingresos Mensuales", String.format("$%.2f", ingresosTotales), new Color(156, 39, 176)));
         
-        // Tasa de suscripción (solo activas)
         double tasaSuscripcion = totalClientes > 0 ? (clientesConSuscripcionActiva * 100.0 / totalClientes) : 0;
         panel.add(createStatPanel("Tasa de Suscripción", String.format("%.1f%%", tasaSuscripcion), new Color(0, 150, 136)));
         
-        // Promedio de ingresos por cliente (solo activas)
         double promedioIngresos = clientesConSuscripcionActiva > 0 ? (ingresosTotales / clientesConSuscripcionActiva) : 0;
         panel.add(createStatPanel("Promedio por Cliente", String.format("$%.2f", promedioIngresos), new Color(63, 81, 181)));
         
@@ -271,14 +265,10 @@ public class SectorDetailDialog extends JDialog {
     }
     
     private void updateClientesTab() {
-        // Actualizar el título de la pestaña de clientes con el nuevo conteo
         JTabbedPane parent = (JTabbedPane) getContentPane().getComponent(1);
         parent.setTitleAt(0, "Clientes (" + sector.contarClientes() + ")");
     }
     
-    /**
-     * Actualiza la tabla de clientes con los datos actuales del sector
-     */
     private void actualizarTablaClientes(DefaultTableModel model) {
         // Limpiar tabla
         model.setRowCount(0);

@@ -7,7 +7,7 @@ import tvsystem.exception.SectorNoEncontradoException;
 import java.util.*;
 
 /**
- * Utilidad para generar clientes ficticios en el CSV
+ * Generador de clientes ficticios en el CSV
  */
 public class DatosFicticiosGenerator {
     
@@ -26,9 +26,7 @@ public class DatosFicticiosGenerator {
     
     private static Random random = new Random();
     
-    /**
-     * Genera clientes ficticios y los agrega al CSV
-     */
+    // Genera clientes ficticios y los agrega al CSV
     public static void generarClientesFicticios(SectorService sectorService, ClienteService clienteService, PlanService planService) {
         System.out.println("=== GENERANDO CLIENTES FICTICIOS ===");
         
@@ -45,83 +43,67 @@ public class DatosFicticiosGenerator {
             return;
         }
         
-        // Generar 20 clientes ficticios con diferentes estados
+        // Generar 20 clientes ficticios
         for (int i = 0; i < 20; i++) {
-            // Datos del cliente
             String nombre = NOMBRES[random.nextInt(NOMBRES.length)];
             String rut = generarRutFicticio();
             String direccion = DIRECCIONES[random.nextInt(DIRECCIONES.length)];
             
-            // Sector aleatorio
             Sector sectorSeleccionado = sectores.get(random.nextInt(sectores.size()));
             
-            // Plan aleatorio
             PlanSector planSeleccionado = planes.get(random.nextInt(planes.size()));
             
-            // Agregar cliente al sector usando el servicio
+            // Determinar configuracion de suscripcion segun el indice
+            String estadoSuscripcion = "ACTIVA";
+            java.time.LocalDate proximoVencimiento = java.time.LocalDate.now().plusMonths(1);
+            boolean pagado = true;
+            String descripcionEstado = "ACTIVO";
+            
+            if (i % 10 < 3) {
+                estadoSuscripcion = "PROXIMA_A_VENCER";
+                proximoVencimiento = java.time.LocalDate.now().plusDays(10);
+                pagado = false;
+                descripcionEstado = "PROXIMO A VENCER";
+            } else if (i % 10 < 5) {
+                estadoSuscripcion = "SUSPENDIDA";
+                proximoVencimiento = java.time.LocalDate.now().minusDays(5);
+                pagado = false;
+                descripcionEstado = "SUSPENDIDO";
+            }
+            
             try {
                 boolean clienteAgregado = clienteService.agregarCliente(
                     sectorSeleccionado.getNombre(), 
                     nombre, 
                     rut, 
                     direccion, 
-                    planSeleccionado.getCodigoPlan()
+                    planSeleccionado.getCodigoPlan(),
+                    estadoSuscripcion,
+                    proximoVencimiento,
+                    pagado
                 );
                 
                 if (clienteAgregado) {
-                    // Para algunos clientes, modificar su estado de pago para crear variedad
-                    Cliente clienteCreado = buscarClientePorRut(rut, sectorService);
-                if (clienteCreado != null && clienteCreado.getSuscripcion() != null) {
-                    
-                    // 30% de clientes próximos a vencer (no han pagado y quedan menos de 2 semanas)
-                    if (i % 10 < 3) {
-                        // Simular que la suscripción vence en 10 días y no ha pagado
-                        java.time.LocalDate vencimientoProximo = java.time.LocalDate.now().plusDays(10);
-                        clienteCreado.getSuscripcion().setProximoVencimiento(vencimientoProximo);
-                        clienteCreado.getSuscripcion().setPagado(false);
-                        System.out.println("Cliente " + nombre + " configurado como PRÓXIMO A VENCER");
-                    }
-                    // 20% de clientes suspendidos (vencidos)
-                    else if (i % 10 < 5) {
-                        // Simular que la suscripción ya venció
-                        java.time.LocalDate vencimientoAnterior = java.time.LocalDate.now().minusDays(5);
-                        clienteCreado.getSuscripcion().setProximoVencimiento(vencimientoAnterior);
-                        clienteCreado.getSuscripcion().setPagado(false);
-                        System.out.println("Cliente " + nombre + " configurado como SUSPENDIDO");
-                    }
-                    // El resto (50%) permanecen activos con pagos al día
-                    else {
-                        clienteCreado.getSuscripcion().setPagado(true);
-                        clienteCreado.getSuscripcion().setUltimaFechaPago(java.time.LocalDate.now().minusDays(random.nextInt(20)));
-                        System.out.println("Cliente " + nombre + " configurado como ACTIVO");
-                    }
-                }
-                
-                System.out.println("Cliente " + nombre + " agregado a " + sectorSeleccionado.getNombre() + " con plan " + planSeleccionado.getNombrePlan());
+                    System.out.println("Cliente " + nombre + " agregado a " + sectorSeleccionado.getNombre() + 
+                                     " con plan " + planSeleccionado.getNombrePlan() + 
+                                     " - Estado: " + descripcionEstado);
                 }
             } catch (ClienteInvalidoException ex) {
                 System.err.println("Error al crear cliente ficticio " + nombre + ": " + ex.getMessage());
-                // Continúa con el siguiente cliente
             } catch (SectorNoEncontradoException ex) {
                 System.err.println("Error de sector al crear cliente ficticio " + nombre + ": " + ex.getMessage());
-                // Continúa con el siguiente cliente
             } catch (Exception ex) {
                 System.err.println("Error inesperado al crear cliente ficticio " + nombre + ": " + ex.getMessage());
-                // Continúa con el siguiente cliente
             }
         }
         
         System.out.println("=== GENERACIÓN COMPLETA ===");
     }
     
-    /**
-     * Genera un RUT ficticio válido
-     */
+    // Genera un RUT ficticio valido
     private static String generarRutFicticio() {
-        // Generar un número base de 7-8 dígitos
         int numeroBase = 10000000 + random.nextInt(90000000);
         
-        // Calcular dígito verificador simple
         int suma = 0;
         int temp = numeroBase;
         int[] multiplicadores = {2, 3, 4, 5, 6, 7};
@@ -146,9 +128,6 @@ public class DatosFicticiosGenerator {
         return String.format("%d-%s", numeroBase, dv);
     }
     
-    /**
-     * Busca un cliente por RUT en todos los sectores
-     */
     private static Cliente buscarClientePorRut(String rut, SectorService sectorService) {
         List<Sector> sectores = sectorService.obtenerTodosLosSectores();
         for (Sector sector : sectores) {

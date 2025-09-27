@@ -1,9 +1,9 @@
 package tvsystem.exception;
 
 /**
- * Excepción personalizada para errores relacionados con operaciones de suscripción.
- * Se lanza cuando hay problemas con la creación, modificación o validación de suscripciones.
+ * Excepcion para errores relacionados con operaciones de suscripcion.
  * 
+ * @author Maximiliano Rodriguez
  * @author Elias Manriquez
  */
 public class SuscripcionInvalidaException extends Exception {
@@ -12,23 +12,17 @@ public class SuscripcionInvalidaException extends Exception {
     private String rutCliente;
     private String codigoPlan;
     
-    /**
-     * Constructor básico con mensaje
-     */
+    // Constructor
     public SuscripcionInvalidaException(String mensaje) {
         super(mensaje);
     }
     
-    /**
-     * Constructor con mensaje y causa
-     */
+    // Constructor Sobrecarga
     public SuscripcionInvalidaException(String mensaje, Throwable causa) {
         super(mensaje, causa);
     }
     
-    /**
-     * Constructor completo con información adicional
-     */
+    // Constructor Sobrecarga
     public SuscripcionInvalidaException(String mensaje, String tipoError, String rutCliente, String codigoPlan) {
         super(mensaje);
         this.tipoError = tipoError;
@@ -36,9 +30,7 @@ public class SuscripcionInvalidaException extends Exception {
         this.codigoPlan = codigoPlan;
     }
     
-    /**
-     * Constructor con mensaje, causa e información adicional
-     */
+    // Constructor Sobrecarga
     public SuscripcionInvalidaException(String mensaje, Throwable causa, String tipoError, String rutCliente, String codigoPlan) {
         super(mensaje, causa);
         this.tipoError = tipoError;

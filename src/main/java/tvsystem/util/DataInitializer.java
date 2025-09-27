@@ -5,7 +5,6 @@ import java.util.*;
 
 /**
  * Utilidad para inicializar datos del sistema.
- * Crea sectores con sus planes específicos.
  * 
  * @author Maximiliano Rodriguez
  * @author Elias Manriquez
@@ -44,14 +43,14 @@ public class DataInitializer {
             int precioBase = (Integer) datos[1];
             double descuentoBase = (Double) datos[2];
             
-            // Crear código unico para el sector
+            // Crear codigo unico para el sector
             String codigoSector = codigo + "_" + nombreSector;
             
             PlanSector plan = new PlanSector(
                 codigoSector, 
                 nombre + " (" + nombreSector + ")", 
                 precioBase, 
-                false, // ofertaActiva = false por defecto
+                false,
                 descuentoBase, 
                 nombreSector
             );

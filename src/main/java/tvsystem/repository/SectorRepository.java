@@ -4,18 +4,20 @@ import tvsystem.model.Sector;
 import java.util.*;
 
 /**
- * Repository para gestionar el acceso a datos de sectores.
- * Implementa almacenamiento en memoria.
+ * Repositorio para gestionar el acceso a datos de sectores.
  * 
  * @author Elias Manriquez
  */
 public class SectorRepository {
     private Map<String, Sector> sectores;
     
+    // Constructor
     public SectorRepository() {
         this.sectores = new HashMap<>();
     }
     
+    // -- METODOS --
+
     public void save(Sector sector) {
         sectores.put(sector.getNombre(), sector);
     }

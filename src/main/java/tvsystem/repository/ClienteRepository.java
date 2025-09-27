@@ -5,16 +5,20 @@ import tvsystem.model.Sector;
 import java.util.*;
 
 /**
- * Repository para gestionar el acceso a datos de clientes.
+ * Repositorio para gestionar el acceso a datos de clientes.
  * 
+ * @author Maximiliano Rodriguez
  * @author Elias Manriquez
  */
 public class ClienteRepository {
     private SectorRepository sectorRepository;
     
+    // Constructor
     public ClienteRepository(SectorRepository sectorRepository) {
         this.sectorRepository = sectorRepository;
     }
+    
+    // -- METODOS --
     
     public boolean save(Cliente cliente, String nombreSector) {
         Sector sector = sectorRepository.findByNombre(nombreSector);

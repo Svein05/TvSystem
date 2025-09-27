@@ -1,9 +1,9 @@
 package tvsystem.exception;
 
 /**
- * Excepción personalizada para errores cuando no se encuentra un sector específico.
- * Se lanza cuando se intenta acceder a un sector que no existe en el sistema.
+ * Excepcion para errores cuando no se encuentra un sector especifico.
  * 
+ * @author Maximiliano Rodriguez
  * @author Elias Manriquez
  */
 public class SectorNoEncontradoException extends Exception {
@@ -11,32 +11,24 @@ public class SectorNoEncontradoException extends Exception {
     private String nombreSector;
     private int sectoresDisponibles;
     
-    /**
-     * Constructor básico con mensaje
-     */
+    // Constructor
     public SectorNoEncontradoException(String mensaje) {
         super(mensaje);
     }
     
-    /**
-     * Constructor con mensaje y causa
-     */
+    // Constructor Sobrecarga
     public SectorNoEncontradoException(String mensaje, Throwable causa) {
         super(mensaje, causa);
     }
     
-    /**
-     * Constructor completo con información adicional
-     */
+    // Constructor Sobrecarga
     public SectorNoEncontradoException(String mensaje, String nombreSector, int sectoresDisponibles) {
         super(mensaje);
         this.nombreSector = nombreSector;
         this.sectoresDisponibles = sectoresDisponibles;
     }
     
-    /**
-     * Constructor con mensaje, causa e información adicional
-     */
+    // Constructor Sobrecarga
     public SectorNoEncontradoException(String mensaje, Throwable causa, String nombreSector, int sectoresDisponibles) {
         super(mensaje, causa);
         this.nombreSector = nombreSector;

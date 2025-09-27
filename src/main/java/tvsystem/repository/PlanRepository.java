@@ -5,16 +5,19 @@ import tvsystem.model.Sector;
 import java.util.*;
 
 /**
- * Repository para gestionar el acceso a datos de planes.
+ * Repositorio para gestionar el acceso a datos de planes.
  * 
  * @author Elias Manriquez
  */
 public class PlanRepository {
     private SectorRepository sectorRepository;
     
+    // Constructor
     public PlanRepository(SectorRepository sectorRepository) {
         this.sectorRepository = sectorRepository;
     }
+    
+    // -- METODOS --
     
     public boolean save(PlanSector plan, String nombreSector) {
         Sector sector = sectorRepository.findByNombre(nombreSector);

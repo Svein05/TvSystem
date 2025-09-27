@@ -7,8 +7,9 @@ import java.awt.*;
 import java.text.SimpleDateFormat;
 
 /**
- * Diálogo para mostrar detalles completos de un cliente
+ * Dialogo para mostrar detalles completos de un cliente
  * 
+ * @author Maximiliano Rodriguez
  * @author Elias Manriquez
  */
 public class ClienteDetailDialog extends JDialog {
@@ -41,7 +42,7 @@ public class ClienteDetailDialog extends JDialog {
         JPanel infoPanel = createInfoPanel();
         tabbedPane.addTab("Información General", infoPanel);
         
-        // Pestaña de suscripción
+        // Pestaña de suscripcion
         JPanel suscripcionPanel = createSuscripcionPanel();
         tabbedPane.addTab("Suscripción", suscripcionPanel);
         
@@ -60,7 +61,7 @@ public class ClienteDetailDialog extends JDialog {
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.anchor = GridBagConstraints.WEST;
         
-        // Título
+        // Titulo
         JLabel titleLabel = new JLabel("Información del Cliente");
         titleLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 16));
         titleLabel.setForeground(new Color(33, 150, 243));
@@ -134,7 +135,7 @@ public class ClienteDetailDialog extends JDialog {
             PlanSector plan = suscripcion.getPlan();
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
             
-            // Título
+            // Titulo
             JLabel titleLabel = new JLabel("Detalles de la Suscripción");
             titleLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 16));
             titleLabel.setForeground(new Color(33, 150, 243));
@@ -167,7 +168,7 @@ public class ClienteDetailDialog extends JDialog {
             gbc.gridx = 1;
             detailsPanel.add(new JLabel(dateFormat.format(suscripcion.getFechaInicio())), gbc);
             
-            // Fecha término
+            // Fecha termino
             gbc.gridx = 0; gbc.gridy = 4;
             detailsPanel.add(new JLabel("Fecha Término:"), gbc);
             gbc.gridx = 1;
@@ -254,7 +255,7 @@ public class ClienteDetailDialog extends JDialog {
                     parentWindow.actualizarInterfaz();
                 }
                 
-                // Cerrar el diálogo actual y reabrir con datos frescos
+                // Cerrar el dialogo actual y reabrir con datos frescos
                 dispose();
                 
                 // Obtener cliente actualizado
@@ -267,7 +268,7 @@ public class ClienteDetailDialog extends JDialog {
                         planService);
                     nuevoDialog.setVisible(true);
                 } else {
-                    System.out.println("⚠️ No se pudo recargar el cliente actualizado");
+                    System.out.println("No se pudo recargar el cliente actualizado");
                 }
             } else {
                 JOptionPane.showMessageDialog(this, 

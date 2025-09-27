@@ -1,9 +1,9 @@
 package tvsystem.exception;
 
 /**
- * Excepción personalizada para errores relacionados con datos inválidos de clientes.
- * Se lanza cuando un cliente no cumple con los requisitos de validación.
+ * Excepcion para errores relacionados con datos invalidos de clientes.
  * 
+ * @author Maximiliano Rodriguez
  * @author Elias Manriquez
  */
 public class ClienteInvalidoException extends Exception {
@@ -11,32 +11,24 @@ public class ClienteInvalidoException extends Exception {
     private String codigoError;
     private String rutCliente;
     
-    /**
-     * Constructor básico con mensaje
-     */
+    // Constructor
     public ClienteInvalidoException(String mensaje) {
         super(mensaje);
     }
     
-    /**
-     * Constructor con mensaje y causa
-     */
+    // Constructor Sobrecarga
     public ClienteInvalidoException(String mensaje, Throwable causa) {
         super(mensaje, causa);
     }
     
-    /**
-     * Constructor completo con información adicional
-     */
+    // Constructor Sobrecarga
     public ClienteInvalidoException(String mensaje, String codigoError, String rutCliente) {
         super(mensaje);
         this.codigoError = codigoError;
         this.rutCliente = rutCliente;
     }
     
-    /**
-     * Constructor con mensaje, causa e información adicional
-     */
+    // Constructor Sobrecarga
     public ClienteInvalidoException(String mensaje, Throwable causa, String codigoError, String rutCliente) {
         super(mensaje, causa);
         this.codigoError = codigoError;

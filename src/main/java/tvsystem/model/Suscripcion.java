@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.util.Date;
 
 /**
+ * Clase de suscripcion enlazada a un cliente
+ * 
  * @author Maximiliano Rodriguez
  * @author Elias Manriquez
  */
@@ -17,6 +19,7 @@ public class Suscripcion {
     private LocalDate ultimaFechaPago;
     private LocalDate proximoVencimiento;
 
+    // Constructor
     public Suscripcion(Date fechaInicio, Date fechaTermino, String estado, Cliente cliente, PlanSector plan) {
         this.fechaInicio = fechaInicio;
         this.fechaTermino = fechaTermino;
@@ -26,7 +29,7 @@ public class Suscripcion {
         this.pagado = false;
         this.ultimaFechaPago = null;
         
-        // Calcular próximo vencimiento (1 mes desde fecha inicio)
+        // Calcular proximo vencimiento (1 mes desde fecha inicio)
         if (fechaInicio != null) {
             LocalDate inicio = new java.sql.Date(fechaInicio.getTime()).toLocalDate();
             this.proximoVencimiento = inicio.plusMonths(1);
@@ -57,6 +60,7 @@ public class Suscripcion {
 
     public void setEstado(String estado) {
         this.estado = estado;
+
         // Si se marca como CANCELADA, limpiar fecha de vencimiento
         if ("CANCELADA".equalsIgnoreCase(estado)) {
             this.proximoVencimiento = null;
@@ -104,31 +108,22 @@ public class Suscripcion {
         this.proximoVencimiento = proximoVencimiento;
     }
     
-    // Métodos de negocio
+    // -- Metodos de negocio --
     
-    /**
-     * Registra un pago y extiende la suscripción por 1 mes
-     */
+    // Registra un pago y extiende la suscripcion por 1 mes
     public void registrarPago() {
         this.pagado = true;
         this.ultimaFechaPago = LocalDate.now();
-        
-        // Extender la suscripción por 1 mes desde la fecha actual
         this.proximoVencimiento = LocalDate.now().plusMonths(1);
-        
-        // Actualizar estado a ACTIVA
         this.estado = "ACTIVA";
         
-        // Actualizar fechaTermino (mantenemos compatibilidad con Date)
+        // Actualizar fechaTermino
         java.sql.Date nuevaFechaTermino = java.sql.Date.valueOf(this.proximoVencimiento);
         this.fechaTermino = nuevaFechaTermino;
     }
     
-    /**
-     * Determina el estado actual de la suscripción basado en fechas, pagos y estado manual
-     */
+    // Determina el estado actual de la suscripcion basado en fechas, pagos y estado manual
     public String obtenerEstadoActual() {
-        // Verificar si fue marcado manualmente (respetar estados manuales)
         if ("CANCELADA".equalsIgnoreCase(this.estado) || 
             "SUSPENDIDA".equalsIgnoreCase(this.estado)) {
             return this.estado;
@@ -140,26 +135,25 @@ public class Suscripcion {
             return "CANCELADA";
         }
         
-        // Si está vencida (fecha pasada)
+        // Si esta vencida
         if (hoy.isAfter(proximoVencimiento)) {
-            // Actualizar el estado interno también
             this.estado = "SUSPENDIDA";
             return "SUSPENDIDA";
         }
         
-        // Si faltan 2 semanas o menos y no está pagado el próximo mes
+        // Si faltan 2 semanas o menos y no esta pagado el próximo mes
         LocalDate dosSemantasAntes = proximoVencimiento.minusWeeks(2);
         if (!pagado && (hoy.isEqual(dosSemantasAntes) || hoy.isAfter(dosSemantasAntes))) {
             this.estado = "PROXIMA_A_VENCER";
             return "PROXIMA_A_VENCER";
         }
         
-        // Si todo está bien, está activa
+        // Si todo esta bien, está activa
         this.estado = "ACTIVA";
         return "ACTIVA";
     }
     
-    // -- SOBREESCRITURA DE MÉTODOS --
+    // -- SOBREESCRITURA DE METODOS --
     
     @Override
     public String toString() {

@@ -19,7 +19,6 @@ import java.util.Map;
 
 /**
  * Ventana principal de la interfaz grafica del sistema.
- * Refactorizada para enfocarse únicamente en la presentación.
  * 
  * @author Maximiliano Rodriguez
  * @author Elias Manriquez
@@ -29,14 +28,14 @@ public class MainWindow extends JFrame {
     private ClienteService clienteService;
     private PlanService planService;
     private CaptacionService captacionService;
-    private ReportService reportService; // Nuevo servicio
+    private ReportService reportService;
     
     // Componentes de la interfaz
     private JTabbedPane tabbedPane;
     private JPanel chartPanel;
     private JPanel sectoresGridPanel;
     
-    // Array de colores para los gráficos
+    // Array de colores para los graficos
     private final Color[] coloresGraficos = AppConstants.COLORES_GRAFICOS;
     
     // Estado del filtro por umbral
@@ -58,7 +57,6 @@ public class MainWindow extends JFrame {
         LoggerHelper.success("Ventana principal inicializada correctamente");
     }
     
-    // Configura el manejo del cierre de ventana para guardar datos
     private void configurarCierreVentana() {
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         
@@ -76,7 +74,7 @@ public class MainWindow extends JFrame {
             if (CsvManager.tieneArchivoSeleccionado()) {
                 int opcion = JOptionPane.showConfirmDialog(
                     this,
-                    "¿Desea guardar los cambios antes de salir?\\n\\nArchivo: " + 
+                    "¿Desea guardar los cambios antes de salir?\n\nArchivo: " + 
                     new java.io.File(CsvManager.getArchivoActual()).getName(),
                     "Guardar cambios",
                     JOptionPane.YES_NO_CANCEL_OPTION,
@@ -125,7 +123,8 @@ public class MainWindow extends JFrame {
             
             // Configurar ventana para pantalla completa maximizada
             setExtendedState(JFrame.MAXIMIZED_BOTH);
-            // Tamaño mínimo por si no se puede maximizar
+
+            // Tamaño minimo por si no se puede maximizar
             setSize(1200, 800);
             setLocationRelativeTo(null);
             
@@ -187,7 +186,7 @@ public class MainWindow extends JFrame {
         // Panel derecho con botones de acción
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         
-        // Botón Reporte
+        // Boton Reporte
         JButton btnReporte = new JButton("Reporte");
         SystemConfigurer.configurarBotonConColor(btnReporte, AppConstants.COLOR_BOTON_REPORTE, AppConstants.COLOR_TEXTO_BLANCO);
         btnReporte.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
@@ -195,7 +194,7 @@ public class MainWindow extends JFrame {
         
         btnReporte.addActionListener(e -> generarReporteAnalisis());
         
-        // Botón Guardar
+        // Boton Guardar
         JButton btnGuardar = new JButton("Guardar");
         SystemConfigurer.configurarBotonConColor(btnGuardar, AppConstants.COLOR_BOTON_GUARDAR, AppConstants.COLOR_TEXTO_BLANCO);
         btnGuardar.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
@@ -346,9 +345,7 @@ public class MainWindow extends JFrame {
         return panel;
     }
     
-    /**
-     * Calcula los ingresos totales de un sector
-     */
+    // Calcula los ingresos totales de un sector
     private double calcularIngresosSector(Sector sector) {
         if (sector == null) return 0.0;
         
@@ -388,24 +385,24 @@ public class MainWindow extends JFrame {
         JButton btnDescuentoAutomatico = new JButton("Aplicar Descuento Automático");
         controlPanel.add(btnDescuentoAutomatico);
         
-        // Acción del botón filtrar - solo actualiza el grid visual
+        // Accion del boton filtrar - solo actualiza el grid visual
         btnFiltrar.addActionListener(e -> {
             int umbral = (Integer) umbralSpinner.getValue();
-            // Actualizar grid de sectores con colores críticos
+            // Actualizar grid de sectores con colores criticos
             actualizarSectoresGrid(umbral);
             
-            // Marcar que se aplicó filtro por umbral
+            // Marcar que se aplico filtro por umbral
             filtroUmbralAplicado = true;
             ultimoUmbralAplicado = umbral;
         });
         
-        // Acción del botón de descuento automático
+        // Accion del boton de descuento automático
         btnDescuentoAutomatico.addActionListener(e -> {
             if (filtroUmbralAplicado) {
-                // Si ya filtró, aplicar descuento con el último umbral usado
+                // Si ya filtro, aplicar descuento con el ultimo umbral usado
                 aplicarDescuentoAutomaticoConResumen(ultimoUmbralAplicado);
             } else {
-                // Si no ha filtrado, mostrar diálogo de opciones
+                // Si no ha filtrado, mostrar dialogo de opciones
                 mostrarDialogoOpcionesDescuento();
             }
         });
@@ -415,9 +412,7 @@ public class MainWindow extends JFrame {
         return panel;
     }
     
-    /**
-     * Crea el panel con grid de botones de sectores (mitad derecha)
-     */
+    // Crea el panel con grid de botones de sectores (mitad derecha)
     private JPanel createGridSectoresPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Acceso Directo a Sectores"));
@@ -434,9 +429,7 @@ public class MainWindow extends JFrame {
         return panel;
     }
     
-    /**
-     * Actualiza la cuadrícula de sectores con datos frescos
-     */
+    // Actualiza la cuadrícula de sectores con datos frescos
     private void actualizarSectoresGrid() {
         actualizarSectoresGrid(-1); // Sin filtro de umbral
         
@@ -445,10 +438,7 @@ public class MainWindow extends JFrame {
         ultimoUmbralAplicado = -1;
     }
     
-    /**
-     * Actualiza la cuadrícula de sectores con datos frescos y filtro visual
-     * @param umbralCritico umbral para marcar sectores críticos (-1 = sin filtro)
-     */
+    // Actualiza la cuadrícula de sectores con datos frescos y filtro visual
     private void actualizarSectoresGrid(int umbralCritico) {
         if (sectoresGridPanel == null) {
             LoggerHelper.warning("sectoresGridPanel es null, no se puede actualizar aún");
@@ -460,11 +450,11 @@ public class MainWindow extends JFrame {
         List<Sector> sectores = sectorService.obtenerTodosLosSectores();
         
         for (Sector sector : sectores) {
-            // Agregar información del sector
+            // Agregar informacion del sector
             int clientes = sector.contarClientes();
             double ingresos = calcularIngresosSector(sector);
             
-            // Crear botón personalizado con bolita si tiene ingresos
+            // Crear boton personalizado con bolita si tiene ingresos
             JButton btnSector;
             if (ingresos > 0) {
                 final Color colorSector = obtenerColorSector(sector.getNombre());
@@ -500,7 +490,7 @@ public class MainWindow extends JFrame {
                              "<br><small>" + clientes + " clientes</small>" +
                              "<br><small>$" + String.format("%.0f", ingresos) + "</small></center></html>");
             
-            // Aplicar color crítico si el sector está por debajo del umbral
+            // Aplicar color critico si el sector está por debajo del umbral
             if (umbralCritico > 0 && clientes < umbralCritico) {
                 btnSector.setBackground(new Color(255, 205, 210)); // Rojo pastel
                 btnSector.setOpaque(true);
@@ -514,12 +504,12 @@ public class MainWindow extends JFrame {
                 btnSector.setBorder(UIManager.getBorder("Button.border"));
             }
             
-            // Acción al hacer clic - mostrar ventana del sector
+            // Accion al hacer clic - mostrar ventana del sector
             btnSector.addActionListener(e -> {
                 SectorDetailDialog dialog = new SectorDetailDialog(
                     this, sector, clienteService, planService);
                 dialog.setVisible(true);
-                // Actualizar después de cerrar el diálogo
+                // Actualizar despues de cerrar el diálogo
                 actualizarTodasLasVistas();
             });
             
@@ -531,9 +521,7 @@ public class MainWindow extends JFrame {
         sectoresGridPanel.repaint();
     }
     
-    /**
-     * Crea el panel de gestión de clientes
-     */
+    // Crea el panel de gestion de clientes
     private JPanel createClientesPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         
@@ -590,14 +578,12 @@ public class MainWindow extends JFrame {
         return panel;
     }
     
-    /**
-     * Crea el panel superior de clientes con acciones principales y filtros funcionales
-     */
+    // Crea el panel superior de clientes con acciones principales y filtros funcionales
     private JPanel createClientesTopPanel(javax.swing.table.DefaultTableModel tableModel, JTable clientesTable) {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
         panel.setBorder(BorderFactory.createTitledBorder("Acciones"));
         
-        // Botón principal - Agregar Cliente
+        // Boton principal - Agregar Cliente
         JButton btnAgregarCliente = new JButton("➕ Agregar Cliente");
         btnAgregarCliente.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
         SystemConfigurer.configurarBotonConColor(btnAgregarCliente, AppConstants.COLOR_BOTON_GUARDAR, AppConstants.COLOR_TEXTO_BLANCO);
@@ -641,10 +627,9 @@ public class MainWindow extends JFrame {
             aplicarFiltroYOrden(tableModel, tipoFiltro, valorFiltro, criterioOrden);
         });
         
-        // Acción agregar cliente
+        // Accion agregar cliente
         btnAgregarCliente.addActionListener(e -> {
             mostrarDialogoAgregarCliente();
-            // Recargar tabla después de agregar
             actualizarTablaClientes(tableModel);
         });
         
@@ -663,24 +648,22 @@ public class MainWindow extends JFrame {
         return panel;
     }
     
-    /**
-     * Crea el panel de lista de clientes con tabla moderna
-     */
+    // Crea el panel de lista de clientes con tabla moderna
     private JPanel createClientesListPanel(javax.swing.table.DefaultTableModel tableModel, JTable clientesTable) {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Lista de Clientes"));
         
         // Panel de botones
         JPanel buttonPanel = new JPanel(new FlowLayout());
-        JButton btnEditar = new JButton("✏️ Editar");
-        JButton btnEliminar = new JButton("🗑️ Eliminar");
-        JButton btnVerDetalles = new JButton("👁️ Ver Detalles");
+        JButton btnEditar = new JButton("Editar");
+        JButton btnEliminar = new JButton("Eliminar");
+        JButton btnVerDetalles = new JButton("Ver Detalles");
         
         btnEditar.setEnabled(false);
         btnEliminar.setEnabled(false);
         btnVerDetalles.setEnabled(false);
         
-        // Listener para selección en la tabla
+        // Listener para seleccion en la tabla
         clientesTable.getSelectionModel().addListSelectionListener(e -> {
             boolean hasSelection = clientesTable.getSelectedRow() != -1;
             btnEditar.setEnabled(hasSelection);
@@ -751,11 +734,8 @@ public class MainWindow extends JFrame {
         return panel;
     }
     
-    /**
-     * Actualiza la tabla de clientes con todos los datos
-     */
+    // Actualiza la tabla de clientes con todos los datos
     private void actualizarTablaClientes(javax.swing.table.DefaultTableModel tableModel) {
-        // Limpiar tabla existente
         tableModel.setRowCount(0);
         
         // Obtener todos los clientes de todos los sectores
@@ -766,7 +746,7 @@ public class MainWindow extends JFrame {
                 String estado = obtenerEstadoCliente(cliente);
                 String accion = "";
                 
-                // Mostrar botón "Registrar Pago" si está próxima a vencer
+                // Mostrar boton "Registrar Pago" si está próxima a vencer
                 if ("Próxima a Vencer".equals(estado)) {
                     accion = "Registrar Pago";
                 }
@@ -786,9 +766,7 @@ public class MainWindow extends JFrame {
         }
     }
     
-    /**
-     * Busca un cliente por su RUT en todos los sectores
-     */
+    // Busca un cliente por su RUT en todos los sectores
     private Cliente buscarClientePorRut(String rut) {
         List<Sector> sectores = sectorService.obtenerTodosLosSectores();
         for (Sector sector : sectores) {
@@ -802,9 +780,7 @@ public class MainWindow extends JFrame {
         return null;
     }
     
-    /**
-     * Actualiza los valores disponibles para filtrar según el tipo seleccionado
-     */
+    // Actualiza los valores disponibles para filtrar segu  n el tipo seleccionado
     private void actualizarValoresFiltro(JComboBox<String> cmbValorFiltro, String tipoFiltro) {
         cmbValorFiltro.removeAllItems();
         
@@ -852,21 +828,14 @@ public class MainWindow extends JFrame {
         }
     }
     
-    /**
-     * Aplica el filtro seleccionado a la tabla
-     */
+    // Aplica el filtro seleccionado a la tabla
     private void aplicarFiltro(javax.swing.table.DefaultTableModel tableModel, String tipoFiltro, String valorFiltro) {
         aplicarFiltroYOrden(tableModel, tipoFiltro, valorFiltro, null);
     }
     
-    /**
-     * Aplica filtro y ordenamiento a la tabla
-     */
+    // Aplica filtro y ordenamiento a la tabla
     private void aplicarFiltroYOrden(javax.swing.table.DefaultTableModel tableModel, String tipoFiltro, String valorFiltro, String criterioOrden) {
-        // Limpiar tabla
         tableModel.setRowCount(0);
-        
-        // Recopilar datos filtrados
         java.util.List<Object[]> datosFiltrados = new java.util.ArrayList<>();
         List<Sector> sectores = sectorService.obtenerTodosLosSectores();
         
@@ -955,22 +924,22 @@ public class MainWindow extends JFrame {
     
     private void mostrarDialogoAgregarCliente() {
         JDialog dialog = new JDialog(this, "Agregar Nuevo Cliente", true);
-        dialog.setSize(500, 450); // Aumentado para mejor visualización con nombres largos
+        dialog.setSize(500, 450);
         dialog.setLocationRelativeTo(this);
         
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 8, 8, 8); // Más espacio entre componentes
+        gbc.insets = new Insets(8, 8, 8, 8);
         gbc.anchor = GridBagConstraints.WEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL; // Para que los campos se expandan
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         
         // Campos del formulario
         gbc.gridx = 0; gbc.gridy = 0;
         panel.add(new JLabel("Nombre:"), gbc);
         gbc.gridx = 1;
-        JTextField txtNombre = new JTextField(30); // Campo más ancho para nombres largos
+        JTextField txtNombre = new JTextField(30);
         panel.add(txtNombre, gbc);
         
         gbc.gridx = 0; gbc.gridy = 1;
@@ -1000,7 +969,6 @@ public class MainWindow extends JFrame {
         JComboBox<String> cmbPlan = new JComboBox<>();
         panel.add(cmbPlan, gbc);
         
-        // Listener para actualizar planes según el sector seleccionado
         cmbSector.addActionListener(e -> {
             String sectorSeleccionado = (String) cmbSector.getSelectedItem();
             if (sectorSeleccionado != null) {
@@ -1033,7 +1001,7 @@ public class MainWindow extends JFrame {
                     return;
                 }
                 
-                // Extraer código del plan
+                // Extraer codigo del plan
                 String codigoPlan = planSeleccionado.split(" - ")[0];
                 
                 boolean exitoso = clienteService.agregarCliente(sector, nombre, rut, domicilio, codigoPlan);
@@ -1078,9 +1046,7 @@ public class MainWindow extends JFrame {
         dialog.setVisible(true);
     }
     
-    /**
-     * Actualiza el ComboBox de planes según el sector seleccionado
-     */
+    // Actualiza el ComboBox de planes segun el sector seleccionado
     private void actualizarPlanesPorSector(JComboBox<String> cmbPlan, String nombreSector) {
         cmbPlan.removeAllItems();
         
@@ -1095,13 +1061,13 @@ public class MainWindow extends JFrame {
         }
         
         if (sectorEncontrado != null) {
-            // Obtener planes específicos del sector
+            // Obtener planes especificos del sector
             Map<String, PlanSector> planesDelSector = sectorEncontrado.getPlanesDisponibles();
             for (PlanSector plan : planesDelSector.values()) {
                 cmbPlan.addItem(plan.getCodigoPlan() + " - " + plan.getNombrePlan());
             }
             
-            // Si no hay planes específicos, mostrar todos los planes disponibles
+            // Si no hay planes especificos, mostrar todos los planes disponibles
             if (planesDelSector.isEmpty()) {
                 for (PlanSector plan : planService.obtenerTodosLosPlanes()) {
                     cmbPlan.addItem(plan.getCodigoPlan() + " - " + plan.getNombrePlan());
@@ -1119,15 +1085,12 @@ public class MainWindow extends JFrame {
         LoggerHelper.success("¡Bienvenido al sistema!");
     }
     
-    /**
-     * MÉTODO PRINCIPAL: Actualiza todas las vistas después de cambios importantes
-     */
     public void actualizarTodasLasVistas() {
         SwingUtilities.invokeLater(() -> {
             // 1. Actualizar grid de sectores
             actualizarSectoresGrid();
             
-            // 2. Actualizar panel de estadísticas (recrear el panel)
+            // 2. Actualizar panel de estadisticas (recrear el panel)
             JPanel sectoresPanel = createSectoresPanel();
             tabbedPane.setComponentAt(0, sectoresPanel);
             
@@ -1139,13 +1102,11 @@ public class MainWindow extends JFrame {
             tabbedPane.revalidate();
             tabbedPane.repaint();
             
-            LoggerHelper.success("🔄 Vistas actualizadas correctamente");
+            LoggerHelper.success("Vistas actualizadas correctamente");
         });
     }
     
-    /**
-     * Muestra el diálogo de detalles para un cliente específico
-     */
+    // Muestra el dialogo de detalles
     public void mostrarDetallesCliente(Cliente cliente) {
         ClienteDetailDialog dialog = new ClienteDetailDialog(
             this, cliente, clienteService, planService);
@@ -1153,9 +1114,7 @@ public class MainWindow extends JFrame {
         // actualizarTodasLasVistas(); // Se actualizará desde el diálogo
     }
     
-    /**
-     * Muestra el diálogo para editar un cliente existente
-     */
+    // Muestra el dialogo para editar un cliente existente
     public void mostrarDialogoEditarCliente(Cliente cliente) {
         JDialog dialog = new JDialog(this, "Editar Cliente", true);
         dialog.setSize(400, 300);
@@ -1229,13 +1188,11 @@ public class MainWindow extends JFrame {
         dialog.setVisible(true);
     }
     
-    /**
-     * Crea un panel con gráfico de torta mejorado (circular)
-     */
+    // Crea un panel con grafico de torta mejorado (circular)
     private JPanel createChartPanel() {
         JPanel mainPanel = new JPanel(new GridLayout(1, 2, 10, 0));
         
-        // Panel izquierdo - Gráfico de torta
+        // Panel izquierdo - Grafico de torta
         JPanel tortaPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -1284,7 +1241,7 @@ public class MainWindow extends JFrame {
         tortaPanel.setBorder(BorderFactory.createTitledBorder("Distribución Clientes"));
         tortaPanel.setPreferredSize(new Dimension(200, 240));
         
-        // Panel derecho - Gráfico de barras de ingresos
+        // Panel derecho - Grafico de barras de ingresos
         JPanel barrasPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -1351,10 +1308,6 @@ public class MainWindow extends JFrame {
         return mainPanel;
     }
     
-    /**
-     * Obtiene un color único y consistente para un sector específico
-     * basado en el hash de su nombre para evitar repeticiones
-     */
     private Color obtenerColorSector(String nombreSector) {
         // Usar el hash del nombre para asegurar consistencia
         int hash = Math.abs(nombreSector.hashCode());
@@ -1362,15 +1315,12 @@ public class MainWindow extends JFrame {
         return coloresGraficos[indiceColor];
     }
     
-    /**
-     * Determina el estado correcto de un cliente basado en su suscripción
-     */
+    // Determina el estado correcto de un cliente basado en su suscripcion
     private String obtenerEstadoCliente(Cliente cliente) {
         if (cliente.getSuscripcion() == null) {
-            return "Cancelado"; // Sin suscripción = Cancelado
+            return "Cancelado";
         }
-        
-        // Usar la nueva lógica de estado basada en fechas y pagos
+
         String estadoActual = cliente.getSuscripcion().obtenerEstadoActual();
         
         switch (estadoActual) {
@@ -1383,71 +1333,56 @@ public class MainWindow extends JFrame {
             case "PROXIMA_A_VENCER":
                 return "Próxima a Vencer";
             default:
-                return "Cancelado"; // Por defecto cancelado, no inactivo
+                return "Cancelado";
         }
     }
     
-    /**
-     * Registra el pago para un cliente específico
-     */
     private void registrarPagoCliente(String rutCliente) {
         Cliente cliente = buscarClientePorRut(rutCliente);
         if (cliente != null && cliente.getSuscripcion() != null) {
             cliente.getSuscripcion().registrarPago();
             
             JOptionPane.showMessageDialog(this,
-                "💳 Pago registrado exitosamente para " + cliente.getNombre() + "\n" +
-                "🗓️ Nueva fecha de vencimiento: " + cliente.getSuscripcion().getProximoVencimiento(),
+                "Pago registrado exitosamente para " + cliente.getNombre() + "\n" +
+                "Nueva fecha de vencimiento: " + cliente.getSuscripcion().getProximoVencimiento(),
                 "Pago Registrado",
                 JOptionPane.INFORMATION_MESSAGE);
         } else {
             JOptionPane.showMessageDialog(this,
-                "❌ No se pudo encontrar el cliente o su suscripción",
+                "No se pudo encontrar el cliente o su suscripción",
                 "Error",
                 JOptionPane.ERROR_MESSAGE);
         }
     }
     
-    /**
-     * Actualiza la interfaz (usado por diálogos para refrescar datos)
-     */
     public void actualizarInterfaz() {
-        // Actualizar específicamente la tabla de clientes activa
         actualizarTablaClientesActiva();
         
-        // También actualizar grid de sectores
         SwingUtilities.invokeLater(() -> {
             actualizarSectoresGrid();
             
-            // Revalidar solo lo necesario
-            if (tabbedPane.getSelectedIndex() == 1) { // Si está en la pestaña de clientes
+            if (tabbedPane.getSelectedIndex() == 1) {
                 tabbedPane.getSelectedComponent().revalidate();
                 tabbedPane.getSelectedComponent().repaint();
             }
         });
         
-        LoggerHelper.debug("🔄 Interfaz actualizada desde diálogo");
+        LoggerHelper.debug("Interfaz actualizada desde diálogo");
     }
     
-    /**
-     * Actualiza la tabla de clientes que está actualmente visible
-     */
+
     private void actualizarTablaClientesActiva() {
-        // Buscar la tabla activa en el panel de clientes
         Component panelClientes = tabbedPane.getComponentAt(1);
         javax.swing.table.DefaultTableModel tableModel = encontrarTableModelEnPanel(panelClientes);
         
         if (tableModel != null) {
             actualizarTablaClientes(tableModel);
-            LoggerHelper.success("📊 Tabla de clientes actualizada directamente");
+            LoggerHelper.success("Tabla de clientes actualizada directamente");
         } else {
-            LoggerHelper.warning("⚠️ No se encontró la tabla de clientes para actualizar");
+            LoggerHelper.warning("No se encontró la tabla de clientes para actualizar");
         }
     }
     
-    /**
-     * Busca recursivamente el DefaultTableModel en un panel
-     */
     private javax.swing.table.DefaultTableModel encontrarTableModelEnPanel(Component component) {
         if (component instanceof JTable) {
             JTable table = (JTable) component;
@@ -1469,12 +1404,7 @@ public class MainWindow extends JFrame {
         return null;
     }
     
-    /**
-     * Aplica descuento automático a sectores críticos y muestra ventana de resumen
-     */
-    /**
-     * Muestra diálogo para elegir filtrar por umbral personalizado o aplicar umbral por defecto
-     */
+    // Aplica descuento automatico a sectores criticos
     private void mostrarDialogoOpcionesDescuento() {
         String[] opciones = {
             "Filtrar por umbral personalizado", 
@@ -1510,9 +1440,7 @@ public class MainWindow extends JFrame {
         }
     }
     
-    /**
-     * Muestra diálogo para ingresar umbral personalizado
-     */
+    // Muestra dialogo para ingresar umbral personalizado
     private void mostrarDialogoUmbralPersonalizado() {
         String input = JOptionPane.showInputDialog(
             this,
@@ -1551,7 +1479,6 @@ public class MainWindow extends JFrame {
 
     private void aplicarDescuentoAutomaticoConResumen(int umbral) {
         try {
-            // Identificar sectores para captación basado en el umbral seleccionado
             List<Sector> sectoresParaCaptacion = captacionService.identificarSectoresParaCaptacion(umbral);
             
             if (sectoresParaCaptacion.isEmpty()) {
@@ -1572,7 +1499,7 @@ public class MainWindow extends JFrame {
                 sectoresParaCaptacion.size(), umbral
             );
             
-            // Confirmar aplicación de descuentos
+            // Confirmar aplicacion de descuentos
             int confirmacion = JOptionPane.showConfirmDialog(this,
                 mensaje,
                 "Confirmar Descuento Escalonado",
@@ -1599,11 +1526,9 @@ public class MainWindow extends JFrame {
         }
     }
     
-    /**
-     * Muestra ventana de resumen con los sectores a los que se aplicó el descuento
-     */
+    // Muestra ventana de resumen con los sectores a los que se aplico el descuento
     private void mostrarResumenDescuentos(List<Sector> sectoresConDescuento, int umbral) {
-        // Crear ventana de diálogo
+        // Crear ventana de dialogo
         JDialog dialog = new JDialog(this, "Resumen de Descuentos Escalonados Aplicados", true);
         dialog.setSize(700, 450);
         dialog.setLocationRelativeTo(this);
@@ -1611,7 +1536,7 @@ public class MainWindow extends JFrame {
         // Panel principal
         JPanel mainPanel = new JPanel(new BorderLayout());
         
-        // Título
+        // Titulo
         JLabel titulo = new JLabel("Descuentos Escalonados Aplicados por Umbral", SwingConstants.CENTER);
         titulo.setFont(new Font("Arial", Font.BOLD, 16));
         titulo.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -1652,7 +1577,6 @@ public class MainWindow extends JFrame {
         tabla.setRowHeight(25);
         tabla.getTableHeader().setReorderingAllowed(false);
         
-        // Configurar colores de la tabla
         tabla.setGridColor(Color.LIGHT_GRAY);
         tabla.getTableHeader().setBackground(new Color(70, 130, 180));
         tabla.getTableHeader().setForeground(Color.WHITE);
@@ -1660,7 +1584,6 @@ public class MainWindow extends JFrame {
         JScrollPane scrollPane = new JScrollPane(tabla);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         
-        // Panel de información adicional
         JPanel infoPanel = new JPanel(new GridLayout(5, 1));
         infoPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
@@ -1668,15 +1591,14 @@ public class MainWindow extends JFrame {
         infoPanel.add(new JLabel("Umbral utilizado: " + umbral + " clientes"));
         infoPanel.add(new JLabel("Descuentos aplicados: 30% (Muy Crítico), 20% (Crítico), 15% (Moderado)"));
         infoPanel.add(new JLabel("Los descuentos se aplicaron a todos los planes de estos sectores."));
-        infoPanel.add(new JLabel("Nota: Los descuentos se guardan automáticamente en el archivo CSV."));
         
-        // Botón de cerrar
+        // Boton de cerrar
         JPanel buttonPanel = new JPanel(new FlowLayout());
         JButton btnCerrar = new JButton("Cerrar");
         btnCerrar.addActionListener(e -> dialog.dispose());
         buttonPanel.add(btnCerrar);
         
-        // Panel inferior que contiene info y botón
+        // Panel inferior que contiene info y boton
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.add(infoPanel, BorderLayout.CENTER);
         bottomPanel.add(buttonPanel, BorderLayout.SOUTH);
@@ -1687,15 +1609,12 @@ public class MainWindow extends JFrame {
         dialog.setVisible(true);
     }
     
-    /**
-     * Genera y exporta un reporte completo de análisis de sectores en formato TXT
-     */
+    // Genera y exporta un reporte completo
     private void generarReporteAnalisis() {
         String rutaArchivo = FileDialogHelper.seleccionarUbicacionReporte(AppConstants.NOMBRE_REPORTE_DEFAULT);
         
         if (rutaArchivo != null) {
             try (java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.FileWriter(rutaArchivo))) {
-                // Delegar generación al servicio especializado
                 reportService.generarReporteCompleto(writer);
                 
                 FileDialogHelper.mostrarInformacion(
