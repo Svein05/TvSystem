@@ -204,30 +204,35 @@ public class SectorDetailDialog extends JDialog {
         
         // Calcular estadísticas
         int totalClientes = clientes.size();
-        int clientesConSuscripcion = 0;
+        int clientesConSuscripcionActiva = 0;
         double ingresosTotales = 0.0;
         
         for (Cliente cliente : clientes) {
             if (cliente.getSuscripcion() != null) {
-                clientesConSuscripcion++;
-                ingresosTotales += cliente.getSuscripcion().getPlan().calcularPrecioFinal();
+                String estado = cliente.getSuscripcion().getEstado();
+                // Solo contar como "con suscripción" las que están ACTIVAS
+                if ("ACTIVA".equalsIgnoreCase(estado)) {
+                    clientesConSuscripcionActiva++;
+                    ingresosTotales += cliente.getSuscripcion().getPlan().calcularPrecioFinal();
+                }
+                // Las CANCELADAS y SUSPENDIDAS se cuentan como "sin suscripción"
             }
         }
         
-        int clientesSinSuscripcion = totalClientes - clientesConSuscripcion;
+        int clientesSinSuscripcion = totalClientes - clientesConSuscripcionActiva;
         
         // Crear paneles de estadísticas
         panel.add(createStatPanel("Total de Clientes", String.valueOf(totalClientes), new Color(33, 150, 243)));
-        panel.add(createStatPanel("Con Suscripción", String.valueOf(clientesConSuscripcion), new Color(76, 175, 80)));
-        panel.add(createStatPanel("Sin Suscripción", String.valueOf(clientesSinSuscripcion), new Color(255, 152, 0)));
+        panel.add(createStatPanel("Con Suscripción Activa", String.valueOf(clientesConSuscripcionActiva), new Color(76, 175, 80)));
+        panel.add(createStatPanel("Sin Suscripción Activa", String.valueOf(clientesSinSuscripcion), new Color(255, 152, 0)));
         panel.add(createStatPanel("Ingresos Mensuales", String.format("$%.2f", ingresosTotales), new Color(156, 39, 176)));
         
-        // Tasa de suscripción
-        double tasaSuscripcion = totalClientes > 0 ? (clientesConSuscripcion * 100.0 / totalClientes) : 0;
+        // Tasa de suscripción (solo activas)
+        double tasaSuscripcion = totalClientes > 0 ? (clientesConSuscripcionActiva * 100.0 / totalClientes) : 0;
         panel.add(createStatPanel("Tasa de Suscripción", String.format("%.1f%%", tasaSuscripcion), new Color(0, 150, 136)));
         
-        // Promedio de ingresos por cliente
-        double promedioIngresos = clientesConSuscripcion > 0 ? (ingresosTotales / clientesConSuscripcion) : 0;
+        // Promedio de ingresos por cliente (solo activas)
+        double promedioIngresos = clientesConSuscripcionActiva > 0 ? (ingresosTotales / clientesConSuscripcionActiva) : 0;
         panel.add(createStatPanel("Promedio por Cliente", String.format("$%.2f", promedioIngresos), new Color(63, 81, 181)));
         
         return panel;
@@ -287,7 +292,9 @@ public class SectorDetailDialog extends JDialog {
                 cliente.getDomicilio(),
                 cliente.getSuscripcion() != null ? 
                     cliente.getSuscripcion().getPlan().getNombrePlan() : "Sin Plan",
-                cliente.getSuscripcion() != null ? "Activo" : "Inactivo"
+                // Solo mostrar "Activo" si la suscripción existe Y está ACTIVA
+                (cliente.getSuscripcion() != null && "ACTIVA".equalsIgnoreCase(cliente.getSuscripcion().getEstado())) ? 
+                    "Activo" : "Inactivo"
             };
             model.addRow(fila);
         }

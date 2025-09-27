@@ -39,6 +39,10 @@ public class MainWindow extends JFrame {
     // Array de colores para los gráficos
     private final Color[] coloresGraficos = AppConstants.COLORES_GRAFICOS;
     
+    // Estado del filtro por umbral
+    private boolean filtroUmbralAplicado = false;
+    private int ultimoUmbralAplicado = -1;
+    
     public MainWindow(SectorService sectorService, 
                      ClienteService clienteService,
                      PlanService planService,
@@ -354,7 +358,8 @@ public class MainWindow extends JFrame {
             if (clientes != null) {
                 for (Cliente cliente : clientes) {
                     if (cliente != null && cliente.getSuscripcion() != null 
-                        && cliente.getSuscripcion().getPlan() != null) {
+                        && cliente.getSuscripcion().getPlan() != null
+                        && "ACTIVA".equalsIgnoreCase(cliente.getSuscripcion().getEstado())) {
                         ingresos += cliente.getSuscripcion().getPlan().calcularPrecioFinal();
                     }
                 }
@@ -388,12 +393,21 @@ public class MainWindow extends JFrame {
             int umbral = (Integer) umbralSpinner.getValue();
             // Actualizar grid de sectores con colores críticos
             actualizarSectoresGrid(umbral);
+            
+            // Marcar que se aplicó filtro por umbral
+            filtroUmbralAplicado = true;
+            ultimoUmbralAplicado = umbral;
         });
         
         // Acción del botón de descuento automático
         btnDescuentoAutomatico.addActionListener(e -> {
-            int umbral = (Integer) umbralSpinner.getValue();
-            aplicarDescuentoAutomaticoConResumen(umbral);
+            if (filtroUmbralAplicado) {
+                // Si ya filtró, aplicar descuento con el último umbral usado
+                aplicarDescuentoAutomaticoConResumen(ultimoUmbralAplicado);
+            } else {
+                // Si no ha filtrado, mostrar diálogo de opciones
+                mostrarDialogoOpcionesDescuento();
+            }
         });
         
         panel.add(controlPanel, BorderLayout.CENTER);
@@ -425,6 +439,10 @@ public class MainWindow extends JFrame {
      */
     private void actualizarSectoresGrid() {
         actualizarSectoresGrid(-1); // Sin filtro de umbral
+        
+        // Resetear estado del filtro
+        filtroUmbralAplicado = false;
+        ultimoUmbralAplicado = -1;
     }
     
     /**
@@ -1454,6 +1472,83 @@ public class MainWindow extends JFrame {
     /**
      * Aplica descuento automático a sectores críticos y muestra ventana de resumen
      */
+    /**
+     * Muestra diálogo para elegir filtrar por umbral personalizado o aplicar umbral por defecto
+     */
+    private void mostrarDialogoOpcionesDescuento() {
+        String[] opciones = {
+            "Filtrar por umbral personalizado", 
+            "Aplicar captación de clientes automática (umbral 5)",
+            "Cancelar"
+        };
+        
+        String mensaje = "Primero debe filtrar por umbral para aplicar descuento.\n\n" +
+                        "Seleccione una opción:";
+        
+        int seleccion = JOptionPane.showOptionDialog(
+            this,
+            mensaje,
+            "Filtrar antes de aplicar descuento",
+            JOptionPane.YES_NO_CANCEL_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            opciones,
+            opciones[0]
+        );
+        
+        switch (seleccion) {
+            case 0: // Filtrar por umbral personalizado
+                mostrarDialogoUmbralPersonalizado();
+                break;
+            case 1: // Aplicar con umbral por defecto (5)
+                aplicarDescuentoAutomaticoConResumen(AppConstants.THRESHOLDS.UMBRAL_SECTOR_DEBIL);
+                break;
+            case 2: // Cancelar
+            default:
+                // No hacer nada
+                break;
+        }
+    }
+    
+    /**
+     * Muestra diálogo para ingresar umbral personalizado
+     */
+    private void mostrarDialogoUmbralPersonalizado() {
+        String input = JOptionPane.showInputDialog(
+            this,
+            "Ingrese el umbral personalizado (número de clientes mínimo):",
+            "Filtro por Umbral Personalizado",
+            JOptionPane.QUESTION_MESSAGE
+        );
+        
+        if (input != null && !input.trim().isEmpty()) {
+            try {
+                int umbralPersonalizado = Integer.parseInt(input.trim());
+                if (umbralPersonalizado < 1) {
+                    JOptionPane.showMessageDialog(this,
+                        "El umbral debe ser mayor a 0",
+                        "Valor inválido",
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                // Aplicar filtro primero
+                actualizarSectoresGrid(umbralPersonalizado);
+                filtroUmbralAplicado = true;
+                ultimoUmbralAplicado = umbralPersonalizado;
+                
+                // Luego aplicar descuento
+                aplicarDescuentoAutomaticoConResumen(umbralPersonalizado);
+                
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this,
+                    "Por favor ingrese un número válido",
+                    "Valor inválido",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
     private void aplicarDescuentoAutomaticoConResumen(int umbral) {
         try {
             // Identificar sectores para captación basado en el umbral seleccionado

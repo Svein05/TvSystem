@@ -244,7 +244,17 @@ public class ReportService {
         
         for (PlanSector plan : planes) {
             List<Cliente> clientesConPlan = clienteService.obtenerClientesPorPlan(plan.getCodigoPlan());
-            long ingresos = plan.calcularPrecioFinal() * clientesConPlan.size();
+            
+            // Solo contar clientes con suscripciones ACTIVAS
+            int clientesActivos = 0;
+            for (Cliente cliente : clientesConPlan) {
+                if (cliente.getSuscripcion() != null && 
+                    "ACTIVA".equalsIgnoreCase(cliente.getSuscripcion().getEstado())) {
+                    clientesActivos++;
+                }
+            }
+            
+            long ingresos = plan.calcularPrecioFinal() * clientesActivos;
             ingresoTotal += ingresos;
             
             if (plan.getOfertaActiva()) {
@@ -253,7 +263,7 @@ public class ReportService {
             
             detallesPlanes.add(new PlanMetrics(
                 plan.getNombrePlan(),
-                clientesConPlan.size(),
+                clientesActivos, // Usar clientesActivos en lugar de clientesConPlan.size()
                 plan.calcularPrecioFinal(),
                 plan.getPrecioMensual(),
                 ingresos,

@@ -97,9 +97,13 @@ public class ClienteDetailDialog extends JDialog {
         gbc.gridx = 0; gbc.gridy = 4;
         panel.add(new JLabel("Estado:"), gbc);
         gbc.gridx = 1;
-        String estado = cliente.getSuscripcion() != null ? "Con Suscripción" : "Sin Suscripción";
+        
+        // Considerar solo suscripciones ACTIVAS como "Con Suscripción"
+        boolean tieneSuscripcionActiva = cliente.getSuscripcion() != null && 
+                                        "ACTIVA".equalsIgnoreCase(cliente.getSuscripcion().getEstado());
+        String estado = tieneSuscripcionActiva ? "Con Suscripción Activa" : "Sin Suscripción Activa";
         JLabel estadoLabel = new JLabel(estado);
-        estadoLabel.setForeground(cliente.getSuscripcion() != null ? 
+        estadoLabel.setForeground(tieneSuscripcionActiva ? 
             new Color(76, 175, 80) : new Color(244, 67, 54));
         estadoLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
         panel.add(estadoLabel, gbc);
