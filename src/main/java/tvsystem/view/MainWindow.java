@@ -1,5 +1,5 @@
 
-package tvsystem.view.gui;
+package tvsystem.view;
 
 import tvsystem.service.*;
 import tvsystem.model.*;

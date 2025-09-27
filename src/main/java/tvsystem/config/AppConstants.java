@@ -3,7 +3,7 @@ package tvsystem.config;
 import java.awt.Color;
 
 /**
- * Constantes de la aplicación.
+ * Constantes de la aplicacion.
  * 
  * @author Elias Manriquez
  */

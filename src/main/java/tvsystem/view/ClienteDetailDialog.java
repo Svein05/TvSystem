@@ -1,4 +1,4 @@
-package tvsystem.view.gui;
+package tvsystem.view;
 
 import tvsystem.model.*;
 import tvsystem.service.*;
